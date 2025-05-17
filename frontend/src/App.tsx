@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Board from "./2048/components/board";
 import "./App.css";
+import { GameContext } from "./2048/game-context";
 
 function App() {
   const [count, setCount] = useState(0);
+  const { getTiles } = useContext(GameContext);
 
   async function getCount() {
     const url = "http://localhost:3000/api/count";
@@ -15,7 +17,6 @@ function App() {
 
       const data = await response.json();
       setCount(data.count);
-      console.log(data);
     } catch (error) {
       let message;
       if (error instanceof Error) message = error.message;
@@ -34,7 +35,6 @@ function App() {
 
       const data = await response.json();
       setCount(data.count);
-      console.log(data);
     } catch (error) {
       let message;
       if (error instanceof Error) message = error.message;
@@ -44,8 +44,9 @@ function App() {
   }
 
   useEffect(() => {
-    getCount();
-  }, []);
+    const gameStateJSON = JSON.stringify(getTiles());
+    console.log(gameStateJSON);
+  });
 
   return (
     <main>

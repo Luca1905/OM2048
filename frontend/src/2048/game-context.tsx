@@ -14,9 +14,9 @@ type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
 export const GameContext = createContext({
   score: 0,
   status: "ongoing",
-  moveTiles: (_: MoveDirection) => { },
+  moveTiles: (_: MoveDirection) => {},
   getTiles: () => [] as Tile[],
-  startGame: () => { },
+  startGame: () => {},
 });
 
 export default function GameProvider({ children }: PropsWithChildren) {
@@ -48,7 +48,7 @@ export default function GameProvider({ children }: PropsWithChildren) {
   };
 
   const getTiles = () => {
-    return gameState.tilesByIds.map((tileId) => gameState.tiles[tileId]!);
+    return gameState.tileIds.map((tileId) => gameState.tilesById[tileId]!);
   };
 
   const moveTiles = useCallback(
@@ -66,8 +66,12 @@ export default function GameProvider({ children }: PropsWithChildren) {
     dispatch({ type: "create_tile", tile: { position: [0, 2], value: 2 } });
   };
 
+  // const getGameStateJSON = () => {
+  //   return JSON.stringify(gameState);
+  // }
+
   const checkGameState = () => {
-    const { tiles, board } = gameState;
+    const { tilesById: tiles, board } = gameState;
     const n = tileCountPerDimension;
 
     const isWon = Object.values(tiles).some(

@@ -7,8 +7,8 @@ type GameStatus = "ongoing" | "won" | "lost";
 
 type State = {
   board: string[][];
-  tiles: TileMap;
-  tilesByIds: string[];
+  tilesById: TileMap;
+  tileIds: string[];
   hasChanged: boolean;
   score: number;
   status: GameStatus;
@@ -36,8 +36,8 @@ function createBoard() {
 
 export const initialState: State = {
   board: createBoard(),
-  tiles: {},
-  tilesByIds: [],
+  tilesById: {},
+  tileIds: [],
   hasChanged: false,
   score: 0,
   status: "ongoing",
@@ -55,7 +55,7 @@ export default function gameReducer(state: State, action: Action): State {
           continue;
         }
 
-        const tile = state.tiles[tileId];
+        const tile = state.tilesById[tileId];
         if (!tile) {
           continue;
         }
@@ -67,8 +67,8 @@ export default function gameReducer(state: State, action: Action): State {
 
       return {
         ...state,
-        tiles: newTiles,
-        tilesByIds: Object.keys(newTiles),
+        tilesById: newTiles,
+        tileIds: Object.keys(newTiles),
         hasChanged: false,
       };
     }
@@ -81,14 +81,14 @@ export default function gameReducer(state: State, action: Action): State {
       return {
         ...state,
         board: newBoard,
-        tiles: {
-          ...state.tiles,
+        tilesById: {
+          ...state.tilesById,
           [tileId]: {
             id: tileId,
             ...action.tile,
           },
         },
-        tilesByIds: [...state.tilesByIds, tileId],
+        tileIds: [...state.tileIds, tileId],
       };
     }
     case "move_up": {
@@ -106,7 +106,7 @@ export default function gameReducer(state: State, action: Action): State {
           if (isNil(currentTileId)) {
             continue;
           }
-          const currentTile = state.tiles[currentTileId];
+          const currentTile = state.tilesById[currentTileId];
           if (isNil(currentTile)) {
             continue;
           }
@@ -141,7 +141,7 @@ export default function gameReducer(state: State, action: Action): State {
       return {
         ...state,
         board: newBoard,
-        tiles: newTiles,
+        tilesById: newTiles,
         hasChanged,
         score,
       };
@@ -161,7 +161,7 @@ export default function gameReducer(state: State, action: Action): State {
           if (isNil(currentTileId)) {
             continue;
           }
-          const currentTile = state.tiles[currentTileId];
+          const currentTile = state.tilesById[currentTileId];
           if (isNil(currentTile)) {
             continue;
           }
@@ -196,7 +196,7 @@ export default function gameReducer(state: State, action: Action): State {
       return {
         ...state,
         board: newBoard,
-        tiles: newTiles,
+        tilesById: newTiles,
         hasChanged,
         score,
       };
@@ -216,7 +216,7 @@ export default function gameReducer(state: State, action: Action): State {
           if (isNil(currentTileId)) {
             continue;
           }
-          const currentTile = state.tiles[currentTileId];
+          const currentTile = state.tilesById[currentTileId];
           if (isNil(currentTile)) {
             continue;
           }
@@ -250,7 +250,7 @@ export default function gameReducer(state: State, action: Action): State {
       return {
         ...state,
         board: newBoard,
-        tiles: newTiles,
+        tilesById: newTiles,
         hasChanged,
         score,
       };
@@ -270,7 +270,7 @@ export default function gameReducer(state: State, action: Action): State {
           if (isNil(currentTileId)) {
             continue;
           }
-          const currentTile = state.tiles[currentTileId];
+          const currentTile = state.tilesById[currentTileId];
           if (isNil(currentTile)) {
             continue;
           }
@@ -305,7 +305,7 @@ export default function gameReducer(state: State, action: Action): State {
       return {
         ...state,
         board: newBoard,
-        tiles: newTiles,
+        tilesById: newTiles,
         hasChanged,
         score,
       };
