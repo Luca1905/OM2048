@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import Board from "./2048/components/board";
-import "./App.css";
+import Score from "./2048/components/score";
+import styles from "./index.module.css";
 import { GameContext } from "./2048/game-context";
 
 function App() {
@@ -49,9 +50,15 @@ function App() {
   });
 
   return (
-    <main>
-      <Board />
-    </main>
+    <div className={styles.twenty48}>
+      <header>
+        <h1>2048</h1>
+        <Score />
+      </header>
+      <main>
+        <Board />
+      </main>
+    </div>
   );
 }
 
