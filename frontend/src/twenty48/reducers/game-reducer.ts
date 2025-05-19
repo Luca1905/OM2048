@@ -1,7 +1,7 @@
 import { flattenDeep, isEqual, isNil } from "lodash";
 import { uid } from "uid";
-import { tileCountPerDimension } from "./constants";
-import type { Tile, TileMap } from "./models";
+import { tileCountPerDimension } from "../lib/constants";
+import type { Tile, TileMap } from "../types/game";
 
 type GameStatus = "ongoing" | "won" | "lost";
 

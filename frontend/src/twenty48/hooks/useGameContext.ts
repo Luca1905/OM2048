@@ -1,25 +1,12 @@
-import { isNil, throttle } from "lodash";
-import type { PropsWithChildren } from "react";
-import { createContext, useCallback, useEffect, useReducer } from "react";
-import {
-  gameWinTileValue,
-  mergeAnimationDuration,
-  tileCountPerDimension,
-} from "./constants";
-import gameReducer, { initialState } from "./game-reducer";
-import type { Tile } from "./models";
+import { isNil } from "lodash";
+import { useCallback, useEffect, useReducer, useState } from "react";
+import gameReducer, { initialState } from "../reducers/game-reducer";
+import { gameWinTileValue, tileCountPerDimension } from "../lib/constants";
+import type { GameState } from "../types/game";
 
 type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
 
-export const GameContext = createContext({
-  score: 0,
-  status: "ongoing",
-  moveTiles: (_: MoveDirection) => {},
-  getTiles: () => [] as Tile[],
-  startGame: () => {},
-});
-
-export default function GameProvider({ children }: PropsWithChildren) {
+export const useGameContext = () => {
   const [gameState, dispatch] = useReducer(gameReducer, initialState);
 
   const getEmptyCells = () => {
@@ -52,11 +39,7 @@ export default function GameProvider({ children }: PropsWithChildren) {
   };
 
   const moveTiles = useCallback(
-    throttle(
-      (type: MoveDirection) => dispatch({ type }),
-      mergeAnimationDuration * 1.05,
-      { trailing: false },
-    ),
+    (type: MoveDirection) => dispatch({ type }),
     [dispatch],
   );
 
@@ -66,10 +49,9 @@ export default function GameProvider({ children }: PropsWithChildren) {
     dispatch({ type: "create_tile", tile: { position: [0, 2], value: 2 } });
   };
 
-  // const getGameStateJSON = () => {
-  //   return JSON.stringify(gameState);
-  // }
-
+  const getGameState = (): GameState => {
+    return gameState;
+  };
   const checkGameState = () => {
     const { tilesById: tiles, board } = gameState;
     const n = tileCountPerDimension;
@@ -123,10 +105,8 @@ export default function GameProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (gameState.hasChanged) {
-      setTimeout(() => {
-        dispatch({ type: "clean_up" });
-        appendRandomTile();
-      }, mergeAnimationDuration);
+      dispatch({ type: "clean_up" });
+      appendRandomTile();
     }
   }, [gameState.hasChanged]);
 
@@ -136,17 +116,12 @@ export default function GameProvider({ children }: PropsWithChildren) {
     }
   }, [gameState.hasChanged]);
 
-  return (
-    <GameContext.Provider
-      value={{
-        score: gameState.score,
-        status: gameState.status,
-        getTiles,
-        moveTiles,
-        startGame,
-      }}
-    >
-      {children}
-    </GameContext.Provider>
-  );
-}
+  return {
+    score: gameState.score,
+    status: gameState.status,
+    getTiles,
+    moveTiles,
+    startGame,
+    getGameState,
+  };
+};

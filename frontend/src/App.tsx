@@ -1,62 +1,59 @@
-import { useContext, useEffect, useState } from "react";
-import Board from "./2048/components/board";
-import Score from "./2048/components/score";
+import { useCallback, useEffect, useRef } from "react";
 import styles from "./index.module.css";
-import { GameContext } from "./2048/game-context";
+import Board from "./twenty48/components/board";
+import { useGameContext } from "./twenty48/hooks/useGameContext";
+import Score from "./twenty48/components/score";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const { getTiles } = useContext(GameContext);
+  const { moveTiles, startGame, getGameState } = useGameContext();
+  const gameState = getGameState();
+  const initialized = useRef(false);
 
-  async function getCount() {
-    const url = "http://localhost:3000/api/count";
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      e.preventDefault();
+
+      switch (e.code) {
+        case "ArrowUp":
+          moveTiles("move_up");
+          break;
+        case "ArrowDown":
+          moveTiles("move_down");
+          break;
+        case "ArrowLeft":
+          moveTiles("move_left");
+          break;
+        case "ArrowRight":
+          moveTiles("move_right");
+          break;
       }
-
-      const data = await response.json();
-      setCount(data.count);
-    } catch (error) {
-      let message;
-      if (error instanceof Error) message = error.message;
-      else message = String(error);
-      console.error(message);
-    }
-  }
-
-  async function incrementCount() {
-    const url = "http://localhost:3000/api/count/increment";
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setCount(data.count);
-    } catch (error) {
-      let message;
-      if (error instanceof Error) message = error.message;
-      else message = String(error);
-      console.error(message);
-    }
-  }
+    },
+    [moveTiles],
+  );
 
   useEffect(() => {
-    const gameStateJSON = JSON.stringify(getTiles());
-    console.log(gameStateJSON);
-  });
+    if (initialized.current === false) {
+      startGame();
+      initialized.current = true;
+    }
+  }, [startGame]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   return (
     <div className={styles.twenty48}>
       <header>
         <h1>2048</h1>
-        <Score />
+        <Score score={gameState.score}/>
       </header>
       <main>
-        <Board />
+        <Board gameState={gameState} />
       </main>
     </div>
   );
