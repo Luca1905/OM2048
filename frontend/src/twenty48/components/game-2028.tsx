@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef } from "react";
-import styles from "./index.module.css";
-import Board from "./twenty48/components/board";
-import Score from "./twenty48/components/score";
-import { useGameContext } from "./twenty48/hooks/useGameContext";
+import type React from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { useGameContext } from "../hooks/useGameContext";
+import type { GameProps } from "../types/game";
+import Board from "./board";
 
-function App() {
+const Game2048: React.FC<GameProps> = memo(({ id, className, style }) => {
   const { moveTiles, startGame, getGameState } = useGameContext();
   const gameState = getGameState();
   const initialized = useRef(false);
@@ -47,16 +47,14 @@ function App() {
   }, [handleKeyDown]);
 
   return (
-    <div className={styles.twenty48}>
-      <header>
-        <h1>2048</h1>
-        <Score score={gameState.score} />
-      </header>
+    <div className={className} style={style}>
       <main>
         <Board gameState={gameState} />
       </main>
     </div>
   );
-}
+});
 
-export default App;
+Game2048.displayName = "Game2048";
+
+export default Game2048;

@@ -1,7 +1,7 @@
 import { isNil } from "lodash";
 import { useCallback, useEffect, useReducer, useState } from "react";
-import gameReducer, { initialState } from "../reducers/game-reducer";
 import { gameWinTileValue, tileCountPerDimension } from "../lib/constants";
+import gameReducer, { initialState } from "../reducers/game-reducer";
 import type { GameState } from "../types/game";
 
 type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
