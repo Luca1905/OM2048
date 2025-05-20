@@ -1,0 +1,72 @@
+import type React from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { useGameContext } from "../hooks/useGameContext";
+import type { GameProps } from "../types/game";
+import Board from "./board";
+
+const Game2048: React.FC<GameProps> = memo(
+  ({ id, className, style, active, onClick }) => {
+    const { startGame, moveTiles, getGameState } = useGameContext(id);
+    const gameState = getGameState();
+    const initialized = useRef(false);
+
+    useEffect(() => {
+      if (!initialized.current) {
+        startGame(id);
+        initialized.current = true;
+      }
+    }, [startGame]);
+
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent) => {
+        if (!active) return;
+        if (
+          ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)
+        ) {
+          e.preventDefault();
+        }
+        switch (e.code) {
+          case "ArrowUp":
+            moveTiles("move_up");
+            break;
+          case "ArrowDown":
+            moveTiles("move_down");
+            break;
+          case "ArrowLeft":
+            moveTiles("move_left");
+            break;
+          case "ArrowRight":
+            moveTiles("move_right");
+            break;
+        }
+      },
+      [moveTiles, active],
+    );
+
+    useEffect(() => {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [handleKeyDown]);
+
+    return (
+      <div
+        className={className}
+        style={{
+          ...(style || {}),
+          border: active ? "2px solid red" : "2px solid transparent",
+        }}
+        onClick={onClick}
+        onKeyDown={onClick}
+      >
+        <main>
+          <Board gameState={gameState} />
+        </main>
+      </div>
+    );
+  },
+);
+
+Game2048.displayName = "Game2048";
+export default Game2048;

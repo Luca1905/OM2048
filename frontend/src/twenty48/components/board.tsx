@@ -1,3 +1,4 @@
+import { isNil } from "lodash";
 import type React from "react";
 import type { JSX } from "react";
 import { memo } from "react";
@@ -24,14 +25,22 @@ const Board: React.FC<BoardProps> = memo(({ gameState }) => {
     return cells;
   };
 
-  const renderTiles = () => {
-    const tiles = gameState.tileIds.map(
-      (tileId) => gameState.tilesById[tileId]!,
-    );
-    return tiles.map((tile: TileModel) => (
-      <Tile key={`${tile.id}`} {...tile} />
-    ));
+  const renderTiles = (): JSX.Element[] => {
+    return gameState.tileIds.map((tileId) => {
+      const tile = gameState.tilesById[tileId];
+
+      if (!tile) {
+        return <div key={tileId}>not available</div>;
+      }
+
+      if (tile.id == null) {
+        return <div key={tileId}>missing id</div>;
+      }
+
+      return <Tile key={tile.id} {...tile} />;
+    });
   };
+
   return (
     <div className={styles.board}>
       {gameState.status === "won" && <Splash heading="You won!" type="won" />}

@@ -19,6 +19,7 @@
 .twenty48 > header {
   display: flex;
   align-items: center;
+  justify-self: center;
   margin: calc(var(--pixel-size) * 1) calc(var(--pixel-size) * 0);
 }
 

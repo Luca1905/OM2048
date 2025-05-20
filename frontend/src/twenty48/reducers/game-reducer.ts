@@ -1,18 +1,8 @@
 import { flattenDeep, isEqual, isNil } from "lodash";
-import { uid } from "uid";
 import { tileCountPerDimension } from "../lib/constants";
-import type { Tile, TileMap } from "../types/game";
+import type { GameState, Tile, TileMap } from "../types/game";
 
 type GameStatus = "ongoing" | "won" | "lost";
-
-type State = {
-  board: string[][];
-  tilesById: TileMap;
-  tileIds: string[];
-  hasChanged: boolean;
-  score: number;
-  status: GameStatus;
-};
 
 type Action =
   | { type: "create_tile"; tile: Tile }
@@ -21,7 +11,7 @@ type Action =
   | { type: "move_down" }
   | { type: "move_left" }
   | { type: "move_right" }
-  | { type: "reset_game" }
+  | { type: "reset_game"; newGameID: string }
   | { type: "update_status"; status: GameStatus };
 
 function createBoard() {
@@ -34,16 +24,20 @@ function createBoard() {
   return board;
 }
 
-export const initialState: State = {
+export const createInitialStateById = (gameID: string): GameState => ({
+  id: gameID,
   board: createBoard(),
   tilesById: {},
   tileIds: [],
   hasChanged: false,
   score: 0,
   status: "ongoing",
-};
+});
 
-export default function gameReducer(state: State, action: Action): State {
+export default function gameReducer(
+  state: GameState,
+  action: Action,
+): GameState {
   switch (action.type) {
     case "clean_up": {
       const flattenBoard = flattenDeep(state.board);
@@ -73,22 +67,21 @@ export default function gameReducer(state: State, action: Action): State {
       };
     }
     case "create_tile": {
-      const tileId = uid();
+      const tileID = action.tile.id;
       const [x, y] = action.tile.position;
       const newBoard = JSON.parse(JSON.stringify(state.board));
-      newBoard[y][x] = tileId;
+      newBoard[y][x] = tileID;
 
       return {
         ...state,
         board: newBoard,
         tilesById: {
           ...state.tilesById,
-          [tileId]: {
-            id: tileId,
+          [tileID]: {
             ...action.tile,
           },
         },
-        tileIds: [...state.tileIds, tileId],
+        tileIds: [...state.tileIds, tileID],
       };
     }
     case "move_up": {
@@ -311,7 +304,7 @@ export default function gameReducer(state: State, action: Action): State {
       };
     }
     case "reset_game":
-      return initialState;
+      return createInitialStateById(action.newGameID);
     case "update_status":
       return {
         ...state,

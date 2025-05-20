@@ -3,21 +3,11 @@ import { memo } from "react";
 import type { Tile as TileProps } from "../types/game";
 import styles from "./styles/tile.module.css";
 
-import { useMediaQuery } from "react-responsive";
-import {
-  containerWidthDesktop,
-  containerWidthMobile,
-  tileCountPerDimension,
-} from "../lib/constants";
+import { containerWidthDesktop, tileCountPerDimension } from "../lib/constants";
 
 const Tile: React.FC<TileProps> = memo(({ position, value }) => {
-  const isWideScreen = useMediaQuery({ minWidth: 512 });
-  const containerWidth = isWideScreen
-    ? containerWidthDesktop
-    : containerWidthMobile;
-
   const positionToPixels = (position: number) =>
-    (position / tileCountPerDimension) * containerWidth;
+    (position / tileCountPerDimension) * containerWidthDesktop;
 
   const style = {
     left: positionToPixels(position[0]),

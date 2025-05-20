@@ -1,5 +1,5 @@
 export type Tile = {
-  id?: string;
+  id: string;
   position: [number, number];
   value: number;
 };
@@ -10,6 +10,7 @@ export type TileMap = {
 type GameStatus = "ongoing" | "won" | "lost";
 
 export type GameState = {
+  id: string;
   board: string[][];
   tilesById: TileMap;
   tileIds: string[];
@@ -32,4 +33,6 @@ export interface GameProps {
   id: string;
   className?: string;
   style?: React.CSSProperties;
+  active: boolean;
+  onClick: () => void;
 }

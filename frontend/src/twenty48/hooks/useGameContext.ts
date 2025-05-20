@@ -1,13 +1,17 @@
 import { isNil } from "lodash";
 import { useCallback, useEffect, useReducer, useState } from "react";
+import { uid } from "uid";
 import { gameWinTileValue, tileCountPerDimension } from "../lib/constants";
-import gameReducer, { initialState } from "../reducers/game-reducer";
+import gameReducer, { createInitialStateById } from "../reducers/game-reducer";
 import type { GameState } from "../types/game";
 
 type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
 
-export const useGameContext = () => {
-  const [gameState, dispatch] = useReducer(gameReducer, initialState);
+export const useGameContext = (gameID: string) => {
+  const [gameState, dispatch] = useReducer(
+    gameReducer,
+    createInitialStateById(gameID),
+  );
 
   const getEmptyCells = () => {
     const results: [number, number][] = [];
@@ -27,6 +31,7 @@ export const useGameContext = () => {
     if (emptyCells.length > 0) {
       const cellIndex = Math.floor(Math.random() * emptyCells.length);
       const newTile = {
+        id: uid(),
         position: emptyCells[cellIndex] as [number, number],
         value: 2,
       };
@@ -43,8 +48,8 @@ export const useGameContext = () => {
     [dispatch],
   );
 
-  const startGame = () => {
-    dispatch({ type: "reset_game" });
+  const startGame = (newGameID: string) => {
+    dispatch({ type: "reset_game", newGameID });
     appendRandomTile();
     appendRandomTile();
   };
@@ -52,6 +57,11 @@ export const useGameContext = () => {
   const getGameState = (): GameState => {
     return gameState;
   };
+
+  const getGameID = (): string => {
+    return gameState.id;
+  };
+
   const checkGameState = () => {
     const { tilesById: tiles, board } = gameState;
     const n = tileCountPerDimension;
