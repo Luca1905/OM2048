@@ -45,8 +45,8 @@ export const useGameContext = () => {
 
   const startGame = () => {
     dispatch({ type: "reset_game" });
-    dispatch({ type: "create_tile", tile: { position: [0, 1], value: 2 } });
-    dispatch({ type: "create_tile", tile: { position: [0, 2], value: 2 } });
+    appendRandomTile();
+    appendRandomTile();
   };
 
   const getGameState = (): GameState => {
