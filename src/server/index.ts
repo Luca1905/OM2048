@@ -2,14 +2,14 @@ import { TRPCError } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import cors from "cors";
 import express from "express";
-import SuperJSON from "superjson";
+import SuperJSON, { type SuperJSONResult } from "superjson";
 import { z } from "zod";
 import redis from "./redis";
 import { createContext, publicProcedure, router } from "./trpc";
 
 export const gameStateSchema = z.object({
   id: z.string(),
-  board: z.string().array().array(),
+  board: z.string().or(z.null()).array().array(),
   tilesById: z.record(
     z.string(),
     z.object({
@@ -37,8 +37,10 @@ export const appRouter = router({
   listGamesByID: publicProcedure
     .input(z.array(z.string().min(1)))
     .query(async ({ input: gameIDs }) => {
-      const raws = await redis.mget<string[]>(gameIDs.map((id) => `game:${id}`));
-      return raws.map((raw, idx) => {
+      const superJsonResult: SuperJSONResult[] = await redis.mget(
+        gameIDs.map((id) => `game:${id}`),
+      );
+      return superJsonResult.map((raw, idx) => {
         if (!raw) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -46,8 +48,7 @@ export const appRouter = router({
           });
         }
         try {
-          const parsed = SuperJSON.parse(raw);
-          return gameStateSchema.parse(parsed);
+          return gameStateSchema.parse(SuperJSON.deserialize(raw));
         } catch (err) {
           console.error(err);
           throw new Error("Game parsing failed");
@@ -58,11 +59,30 @@ export const appRouter = router({
   getGame: publicProcedure
     .input(z.string().min(1))
     .query(async ({ input: gameId }) => {
-      const raw = await redis.get<string>(`game:${gameId}`);
-      if (!raw) {
+      const superJsonResult = await redis.get<SuperJSONResult>(
+        `game:${gameId}`,
+      );
+      if (!superJsonResult) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
       }
-      return gameStateSchema.parse(SuperJSON.parse(raw));
+      return gameStateSchema.parse(SuperJSON.deserialize(superJsonResult));
+    }),
+
+  updateGame: publicProcedure
+    .input(gameStateSchema)
+    .mutation(async ({ input }) => {
+      const gameState = input;
+      const json = SuperJSON.stringify(gameState);
+
+      try {
+        await redis.set(`game:${gameState.id}`, json);
+        return { success: true };
+      } catch (err) {
+        throw new TRPCError({
+          code: "SERVICE_UNAVAILABLE",
+          message: `Failed updating game with id: ${gameState.id}`,
+        });
+      }
     }),
 });
 
@@ -104,10 +124,10 @@ async function main() {
       onError:
         process.env.NODE_ENV === "development"
           ? ({ path, error }) => {
-            console.error(
-              `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`,
-            );
-          }
+              console.error(
+                `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`,
+              );
+            }
           : undefined,
     }),
   );

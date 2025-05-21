@@ -12,7 +12,7 @@ type GameStatus = "ongoing" | "won" | "lost";
 
 export type GameState = {
   id: string;
-  board: string[][];
+  board: (string | null)[][];
   tilesById: TileMap;
   tileIds: string[];
   hasChanged: boolean;

@@ -10,17 +10,23 @@ export interface GameProps {
   className?: string;
   style?: React.CSSProperties;
   active: boolean;
-  onClick: () => void;
   initialGameState: GameState;
+  onClick: () => void;
+  handleGameStateChange: (gameState: GameState) => void;
 }
 
 const Game2048: React.FC<GameProps> = memo(
-  ({ id, className, style, active, onClick, initialGameState }) => {
-    const { startGame, moveTiles, getGameState } =
+  ({
+    id,
+    className,
+    style,
+    active,
+    initialGameState,
+    onClick,
+    handleGameStateChange,
+  }) => {
+    const { startGame, moveTiles, gameState } =
       useGameContext(initialGameState);
-    const gameState = getGameState();
-    console.log(gameState);
-    console.log(SuperJSON.stringify(gameState));
     const initialized = useRef(false);
 
     useEffect(() => {
@@ -29,6 +35,11 @@ const Game2048: React.FC<GameProps> = memo(
         initialized.current = true;
       }
     }, [startGame]);
+
+    useEffect(() => {
+      console.log(SuperJSON.stringify(gameState));
+      handleGameStateChange(gameState);
+    }, [gameState]);
 
     const handleKeyDown = useCallback(
       (e: KeyboardEvent) => {

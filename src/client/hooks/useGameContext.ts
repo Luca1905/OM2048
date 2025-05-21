@@ -1,8 +1,8 @@
 import { isNil } from "lodash";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { uid } from "uid";
 import { gameWinTileValue, tileCountPerDimension } from "../lib/constants";
-import gameReducer, { createInitialStateById } from "../reducers/game-reducer";
+import gameReducer from "../reducers/game-reducer";
 import type { GameState } from "../types/game";
 
 type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
@@ -51,14 +51,6 @@ export const useGameContext = (initialGameState: GameState) => {
     appendRandomTile();
   };
 
-  const getGameState = (): GameState => {
-    return gameState;
-  };
-
-  const getGameID = (): string => {
-    return gameState.id;
-  };
-
   const checkGameState = () => {
     const { tilesById: tiles, board } = gameState;
     const n = tileCountPerDimension;
@@ -74,7 +66,7 @@ export const useGameContext = (initialGameState: GameState) => {
     for (let x = 0; x < n; x += 1) {
       for (let y = 0; y < n; y += 1) {
         const id = board[x]?.[y];
-        if (id == null) {
+        if (isNil(id)) {
           return;
         }
         const tile = tiles[id];
@@ -129,6 +121,6 @@ export const useGameContext = (initialGameState: GameState) => {
     getTiles,
     moveTiles,
     startGame,
-    getGameState,
+    gameState,
   };
 };

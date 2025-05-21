@@ -31,7 +31,7 @@ const Board: React.FC<BoardProps> = memo(({ gameState }) => {
         return <div key={tileId}>not available</div>;
       }
 
-      if (tile.id == null) {
+      if (tile.id === null) {
         return <div key={tileId}>missing id</div>;
       }
 

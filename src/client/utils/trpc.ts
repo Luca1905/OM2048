@@ -18,12 +18,6 @@ export const trpc = createTRPCClient<AppRouter>({
       false: httpBatchStreamLink({
         url: "http://localhost:3000/trpc",
         transformer,
-        fetch(url, options) {
-          return fetch(url, {
-            ...options,
-            credentials: "include",
-          });
-        },
       }),
     }),
   ],

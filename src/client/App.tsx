@@ -19,7 +19,14 @@ function App() {
     })();
   }, []);
 
-  if (loading) return <div>Loading…</div>;
+  if (loading) return <div />;
+
+  async function handleGameStateChange(gameState: GameState) {
+    const result = await trpc.updateGame.mutate(gameState);
+    if (!result.success) {
+      console.error("Failed updating game State");
+    }
+  }
 
   return (
     <div className={styles.twenty48}>
@@ -32,8 +39,9 @@ function App() {
             key={gameState.id}
             id={gameState.id}
             active={gameState.id === selected}
-            onClick={() => setSelected(gameState.id)}
             initialGameState={gameState}
+            onClick={() => setSelected(gameState.id)}
+            handleGameStateChange={handleGameStateChange}
           />
         ))}
       </main>
