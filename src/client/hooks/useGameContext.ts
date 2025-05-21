@@ -7,11 +7,8 @@ import type { GameState } from "../types/game";
 
 type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
 
-export const useGameContext = (gameID: string) => {
-  const [gameState, dispatch] = useReducer(
-    gameReducer,
-    createInitialStateById(gameID),
-  );
+export const useGameContext = (initialGameState: GameState) => {
+  const [gameState, dispatch] = useReducer(gameReducer, initialGameState);
 
   const getEmptyCells = () => {
     const results: [number, number][] = [];

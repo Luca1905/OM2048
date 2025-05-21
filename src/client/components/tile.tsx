@@ -1,7 +1,7 @@
 import type React from "react";
 import { memo } from "react";
+import styles from "../styles/tile.module.css";
 import type { Tile as TileProps } from "../types/game";
-import styles from "./styles/tile.module.css";
 
 import { containerWidthDesktop, tileCountPerDimension } from "../lib/constants";
 

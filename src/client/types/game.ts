@@ -3,6 +3,7 @@ export type Tile = {
   position: [number, number];
   value: number;
 };
+
 export type TileMap = {
   [id: string]: Tile;
 };
@@ -28,11 +29,3 @@ export type Action =
   | { type: "move_right" }
   | { type: "reset_game" }
   | { type: "update_status"; status: GameStatus };
-
-export interface GameProps {
-  id: string;
-  className?: string;
-  style?: React.CSSProperties;
-  active: boolean;
-  onClick: () => void;
-}

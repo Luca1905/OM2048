@@ -26,6 +26,5 @@
     /* Path Aliases */
     "baseUrl": "."
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.js"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src"]
 }

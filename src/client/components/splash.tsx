@@ -1,4 +1,4 @@
-import styles from "./styles/splash.module.css";
+import styles from "../styles/splash.module.css";
 
 export default function Splash({ heading = "You won!", type = "" }) {
   return (

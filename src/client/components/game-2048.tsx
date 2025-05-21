@@ -1,13 +1,26 @@
 import type React from "react";
 import { memo, useCallback, useEffect, useRef } from "react";
+import SuperJSON from "superjson";
 import { useGameContext } from "../hooks/useGameContext";
-import type { GameProps } from "../types/game";
+import type { GameState } from "../types/game";
 import Board from "./board";
 
+export interface GameProps {
+  id: string;
+  className?: string;
+  style?: React.CSSProperties;
+  active: boolean;
+  onClick: () => void;
+  initialGameState: GameState;
+}
+
 const Game2048: React.FC<GameProps> = memo(
-  ({ id, className, style, active, onClick }) => {
-    const { startGame, moveTiles, getGameState } = useGameContext(id);
+  ({ id, className, style, active, onClick, initialGameState }) => {
+    const { startGame, moveTiles, getGameState } =
+      useGameContext(initialGameState);
     const gameState = getGameState();
+    console.log(gameState);
+    console.log(SuperJSON.stringify(gameState));
     const initialized = useRef(false);
 
     useEffect(() => {

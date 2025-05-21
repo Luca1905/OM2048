@@ -1,12 +1,10 @@
-import { isNil } from "lodash";
 import type React from "react";
 import type { JSX } from "react";
 import { memo } from "react";
 import { tileCountPerDimension } from "../lib/constants";
-import type { Tile as TileModel } from "../types/game";
+import styles from "../styles/board.module.css";
 import type { GameState } from "../types/game";
 import Splash from "./splash";
-import styles from "./styles/board.module.css";
 import Tile from "./tile";
 
 interface BoardProps {
