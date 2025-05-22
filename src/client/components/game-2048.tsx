@@ -25,16 +25,8 @@ const Game2048: React.FC<GameProps> = memo(
     onClick,
     handleGameStateChange,
   }) => {
-    const { startGame, moveTiles, gameState } =
+    const { moveTiles, gameState } =
       useGameContext(initialGameState);
-    const initialized = useRef(false);
-
-    useEffect(() => {
-      if (!initialized.current) {
-        startGame(id);
-        initialized.current = true;
-      }
-    }, [startGame]);
 
     useEffect(() => {
       console.log(SuperJSON.stringify(gameState));
