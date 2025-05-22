@@ -1,6 +1,6 @@
 import { isNil } from "lodash";
 import { useCallback, useEffect, useReducer } from "react";
-import { uid } from "uid";
+import { v4 as uuidv4 } from "uuid";
 import { gameWinTileValue, tileCountPerDimension } from "../lib/constants";
 import gameReducer from "../reducers/game-reducer";
 import type { GameState } from "../types/game";
@@ -28,7 +28,7 @@ export const useGameContext = (initialGameState: GameState) => {
     if (emptyCells.length > 0) {
       const cellIndex = Math.floor(Math.random() * emptyCells.length);
       const newTile = {
-        id: uid(),
+        id: uuidv4(),
         position: emptyCells[cellIndex] as [number, number],
         value: 2,
       };

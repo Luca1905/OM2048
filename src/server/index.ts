@@ -3,22 +3,22 @@ import * as trpcExpress from "@trpc/server/adapters/express";
 import cors from "cors";
 import express from "express";
 import SuperJSON, { type SuperJSONResult } from "superjson";
-import { z } from "zod";
+import { z } from "zod/v4";
 import redis from "./redis";
 import { createContext, publicProcedure, router } from "./trpc";
 
 export const gameStateSchema = z.object({
-  id: z.string(),
+  id: z.uuidv4(),
   board: z.string().or(z.null()).array().array(),
   tilesById: z.record(
-    z.string(),
+    z.uuidv4(),
     z.object({
-      id: z.string(),
+      id: z.uuidv4(),
       position: z.tuple([z.number(), z.number()]),
       value: z.number(),
     }),
   ),
-  tileIds: z.string().array(),
+  tileIds: z.uuidv4().array(),
   hasChanged: z.boolean(),
   score: z.number(),
   status: z.enum(["ongoing", "won", "lost"]),

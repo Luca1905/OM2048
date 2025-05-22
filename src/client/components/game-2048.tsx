@@ -25,8 +25,7 @@ const Game2048: React.FC<GameProps> = memo(
     onClick,
     handleGameStateChange,
   }) => {
-    const { moveTiles, gameState } =
-      useGameContext(initialGameState);
+    const { moveTiles, gameState } = useGameContext(initialGameState);
 
     useEffect(() => {
       console.log(SuperJSON.stringify(gameState));
