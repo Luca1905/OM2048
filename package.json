@@ -15,13 +15,14 @@
   "dependencies": {
     "@trpc/client": "^11.1.2",
     "@trpc/server": "^11.1.2",
-    "@upstash/redis": "^1.34.9",
+    "@types/redis": "^4.0.11",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "lodash": "^4.17.21",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-responsive": "9.0.2",
+    "redis": "^5.1.0",
     "superjson": "^2.2.2",
     "uuid": "^11.1.0",
     "zod": "^3.25.20"
