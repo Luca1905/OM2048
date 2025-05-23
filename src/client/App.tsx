@@ -1,31 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Game2048 from "./components/game-2048";
 import styles from "./styles/index.module.css";
-import { trpc } from "./utils/trpc";
 
 import type { GameState } from "./types/game";
 
 import { v4 as uuidv4 } from "uuid";
+import { useOM2048Store } from "./hooks/useOM2048Store";
 
 function App() {
-  const [gameStates, setGameStates] = useState<GameState[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { gameStates, loading, updateGame, createGames } = useOM2048Store();
   const [selected, setSelected] = useState<string>("");
 
-  useEffect(() => {
-    (async () => {
-      const ids = await trpc.listGameIDs.query();
-      const states: GameState[] = await trpc.listGamesByID.query(ids);
-      setGameStates(states);
-      console.log("Game Count: ", states.length);
-      setLoading(false);
-    })();
-  }, []);
-
-  if (loading) return <div />;
+  if (loading) return <div>Loading games...</div>;
 
   async function handleGameStateChange(gameState: GameState) {
-    const result = await trpc.updateGame.mutate(gameState);
+    const result = await updateGame(gameState);
     if (!result.success) {
       console.error("Failed updating game State");
     }
@@ -67,7 +56,7 @@ function App() {
       newGameStates[i] = createInitialState();
     }
     console.log(newGameStates);
-    const result = await trpc.createGames.mutate(newGameStates);
+    const result = await createGames(newGameStates);
     if (!result.success) {
       console.error("Failed creating games");
     }

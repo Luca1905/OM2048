@@ -27,7 +27,7 @@
         "useExhaustiveDependencies": "off"
       },
       "style": {
-        "noUselessElse": "warn",
+        "noUselessElse": "off",
         "noNonNullAssertion": "off"
       },
       "recommended": true
