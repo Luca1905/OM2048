@@ -8,7 +8,7 @@ export type TileMap = {
   [id: string]: Tile;
 };
 
-type GameStatus = "ongoing" | "won" | "lost";
+export type GameStatus = "ongoing" | "won" | "lost";
 
 export type GameState = {
   id: string;

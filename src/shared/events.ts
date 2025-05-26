@@ -3,51 +3,33 @@ import { z } from "zod/v4";
 export const gameIDSchema = z.uuidv4();
 export type GameID = z.infer<typeof gameIDSchema>;
 
-export const gameStateSchema = z.object({
-  id: z.uuidv4(),
-  board: z.string().nullable().array().array(),
-  tilesById: z.record(
-    z.uuidv4(),
-    z.object({
-      id: z.uuidv4(),
-      position: z.tuple([z.number(), z.number()]),
-      value: z.number(),
-    }),
-  ),
-  tileIds: z.uuidv4(),
-  hasChanged: z.boolean(),
-  score: z.number(),
-  status: z.enum(["ongoing", "won", "lost"]),
-});
-export type GameState = z.infer<typeof gameStateSchema>;
+export const storedStateSchema = z.number().nullable().array().array();
+export type StoredState = z.infer<typeof storedStateSchema>;
 
 interface Error {
   error: string;
   errorDetails?: string;
 }
 
-interface Success<T> {
-  data: T;
-}
-
-export type Response<T> = Error | Success<T>;
+export type Response<T> = Error | { data: T };
 
 export interface ServerEvents {
-  "game:updated": (id: GameID) => void;
+  "game:updated": ({ id, state }: { id: GameID; state: StoredState }) => void;
 }
-
 export interface ClientEvents {
-  "games:list": (callback: () => void) => void;
+  "games:list": (
+    callback: (error: string | null, states: {id: GameID, board: StoredState}[] | null) => void,
+  ) => void;
   "games:create": (
-    payload: GameState[],
-    callback: (res: Response<GameID[]>) => void,
+    payload: StoredState[],
+    callback: (res: GameID[]) => void,
   ) => void;
   "game:read": (
-    payload: GameID,
-    callback: (res: Response<GameState>) => void,
+    id: GameID,
+    callback: (error: string | null, state: StoredState | null) => void,
   ) => void;
   "game:update": (
-    payload: GameState,
-    callback: (res: Response<GameID>) => void,
+    payload: { id: GameID; board: StoredState },
+    callback: (error: string | null, gameID: GameID | null) => void,
   ) => void;
 }

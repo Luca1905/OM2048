@@ -3,6 +3,7 @@ import { useCallback, useEffect, useReducer } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { gameWinTileValue, tileCountPerDimension } from "../lib/constants";
 import gameReducer from "../reducers/game-reducer";
+import { socket } from "../socket-io/socket";
 import type { GameState } from "../types/game";
 
 type MoveDirection = "move_up" | "move_down" | "move_left" | "move_right";
@@ -114,6 +115,10 @@ export const useGameContext = (initialGameState: GameState) => {
       checkGameState();
     }
   }, [gameState.hasChanged]);
+
+  useEffect(() => {
+    socket.emit("game:update");
+  }, [gameState]);
 
   return {
     score: gameState.score,

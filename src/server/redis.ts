@@ -11,4 +11,8 @@ redis.on("error", (err) => {
 
 await redis.connect();
 
-export default redis;
+const subscriber = redis.duplicate();
+subscriber.on("error", (err) => console.error(err));
+await subscriber.connect();
+
+export { redis, subscriber };

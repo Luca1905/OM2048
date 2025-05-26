@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev:front": "vite",
+    "dev:back": "bun run --watch src/server",
     "build": "vite build",
     "check": "biome check .",
     "check:unsafe": "biome check --write --unsafe .",
