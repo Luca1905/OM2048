@@ -11,7 +11,8 @@
     "check:unsafe": "biome check --write --unsafe .",
     "check:write": "biome check --write .",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start:back": "bun run src/server/index.ts"
   },
   "dependencies": {
     "@trpc/client": "^11.1.2",

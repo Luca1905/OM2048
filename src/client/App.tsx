@@ -138,9 +138,13 @@ function App() {
             />
           ))
         )}
-        <button type="button" onClick={() => handleCreateGames(99)}>
-          CREATE 99 GAMES
-        </button>
+        {import.meta.env.DEV ? (
+          ""
+        ) : (
+          <button type="button" onClick={() => handleCreateGames(99)}>
+            CREATE 99 GAMES
+          </button>
+        )}
       </main>
     </div>
   );
