@@ -218,7 +218,7 @@ const httpServer = createServer();
 
 const io = createApplication(httpServer, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:4173"],
+    origin: [import.meta.env.VITE_FRONTEND_URL],
   },
 });
 
