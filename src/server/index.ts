@@ -1,7 +1,7 @@
 import type { Server as HttpServer } from "node:http";
 import { createServer } from "node:http";
 
-import type { DefaultEventsMap, ServerOptions } from "socket.io";
+import type { ServerOptions } from "socket.io";
 import { Server } from "socket.io";
 import SuperJSON from "superjson";
 
@@ -10,12 +10,13 @@ import {
   type GameID,
   type ServerEvents,
   type SocketData,
+  type StoredState,
   gameIDSchema,
   storedStateSchema,
 } from "src/shared/events";
 
 import { isNil, zip } from "lodash";
-import type { Socket } from "socket.io-client";
+import { v4 as uuid } from "uuid";
 import { z } from "zod/v4";
 import { redis } from "./redis";
 
@@ -61,7 +62,7 @@ async function getGame(
   }
 }
 
-async function updateGame(
+async function setGame(
   payload: SocketData,
   callback: (error: string | null, gameId: GameID | null) => void,
 ) {
@@ -107,49 +108,49 @@ async function listGames(
   callback: (error: string | null, gameDataList: SocketData[] | null) => void,
 ) {
   try {
-    const keys = await redis.KEYS(`${REDIS_GAME_PREFIX}*`);
-    if (!keys || keys.length === 0) {
-      callback(null, []);
-      return;
-    }
-
-    const results = await redis.MGET(keys);
     const gameList: SocketData[] = [];
-    for (const [fullKey, json] of zip(keys, results)) {
-      if (!isNil(json) && fullKey !== undefined) {
-        try {
-          const gameIdString = fullKey.replace(REDIS_GAME_PREFIX, "");
-          const idValidation = gameIDSchema.safeParse(gameIdString);
+    for await (const keys of redis.scanIterator({
+      TYPE: "string",
+      MATCH: "game:*",
+      COUNT: 100,
+    })) {
+      const results = await redis.MGET(keys);
+      for (const [fullKey, json] of zip(keys, results)) {
+        if (!isNil(json) && fullKey !== undefined) {
+          try {
+            const gameIdString = fullKey.replace(REDIS_GAME_PREFIX, "");
+            const idValidation = gameIDSchema.safeParse(gameIdString);
 
-          if (!idValidation.success) {
-            console.warn(
-              `Skipping game with invalid ID format from key ${fullKey} during listGames:`,
-              idValidation.error instanceof z.ZodError && z.prettifyError
-                ? z.prettifyError(idValidation.error)
-                : idValidation.error.message,
+            if (!idValidation.success) {
+              console.warn(
+                `Skipping game with invalid ID format from key ${fullKey} during listGames:`,
+                idValidation.error instanceof z.ZodError && z.prettifyError
+                  ? z.prettifyError(idValidation.error)
+                  : idValidation.error.message,
+              );
+              continue;
+            }
+            const validGameId = idValidation.data;
+            const board = storedStateSchema.parse(SuperJSON.parse(json));
+            gameList.push({
+              id: validGameId,
+              board: board,
+            });
+          } catch (parseError) {
+            let errorContext = String(parseError);
+            if (parseError instanceof z.ZodError && z.prettifyError) {
+              errorContext = z.prettifyError(parseError);
+            } else if (parseError instanceof Error) {
+              errorContext = parseError.message;
+            }
+            console.error(
+              "Failed to parse game state from Redis MGET result for key:",
+              fullKey,
+              errorContext,
+              "JSON:",
+              json,
             );
-            continue;
           }
-          const validGameId = idValidation.data;
-          const board = storedStateSchema.parse(SuperJSON.parse(json));
-          gameList.push({
-            id: validGameId,
-            board: board,
-          });
-        } catch (parseError) {
-          let errorContext = String(parseError);
-          if (parseError instanceof z.ZodError && z.prettifyError) {
-            errorContext = z.prettifyError(parseError);
-          } else if (parseError instanceof Error) {
-            errorContext = parseError.message;
-          }
-          console.error(
-            "Failed to parse game state from Redis MGET result for key:",
-            fullKey,
-            errorContext,
-            "JSON:",
-            json,
-          );
         }
       }
     }
@@ -179,7 +180,7 @@ export function createApplication(
         callback("Invalid payload: 'id' and 'board' are required.", null);
         return;
       }
-      updateGame(payload, callback);
+      setGame(payload, callback);
       socket.broadcast.emit(WS_UPDATE_CHANNEL, payload, (error) => {
         if (error !== null) {
           console.error(
@@ -193,6 +194,17 @@ export function createApplication(
     });
 
     socket.on("games:list", (callback) => listGames(callback));
+    socket.on("games:create", (payload, callback) => {
+      for (const gs of payload) {
+        setGame({ id: uuid(), board: gs }, (error, gameId) => {
+          if (error !== null) {
+            console.error("Failed creating games: ", error);
+            callback(error, false);
+          }
+        });
+      }
+      callback(null, true);
+    });
 
     socket.on("disconnect", (reason) => {
       console.log(`Socket ${socket.id} disconnected: ${reason}`);
