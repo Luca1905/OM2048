@@ -2,7 +2,6 @@ import _, { isNil } from "lodash";
 import { v4 as uuid } from "uuid";
 import type { GameState, GameStatus, Tile, TileMap } from "../types/game";
 import { gameWinTileValue, tileCountPerDimension } from "./constants";
-import SuperJSON from "superjson";
 
 export function inferGameStateByBoard({
   id,
@@ -14,7 +13,6 @@ export function inferGameStateByBoard({
   const newBoard: (string | null)[][] = Array(4)
     .fill(null)
     .map(() => Array(4).fill(null));
-  console.log("Init Board:", newBoard);
   const newTileMap: TileMap = {};
   const newTileIds: string[] = [];
   let score = 0;
@@ -25,7 +23,6 @@ export function inferGameStateByBoard({
       if (!isNil(oldValue)) {
         const newTileID = uuid();
         newBoard[y]![x] = newTileID;
-        console.log(newBoard);
 
         const newTile: Tile = {
           id: newTileID,
@@ -105,3 +102,30 @@ const checkGameState = (gameState: {
   return "lost";
 };
 
+export function boardWithIDsToNumberBoard(
+  boardWithIDs: (string | null)[][],
+  tilesByID: TileMap,
+): (number | null)[][] {
+  const newBoard: (number | null)[][] = Array(4)
+    .fill(null)
+    .map(() => Array(4).fill(null));
+
+  for (let x = 0; x < boardWithIDs.length; x += 1) {
+    for (let y = 0; y < boardWithIDs.length; y += 1) {
+      const tileID = boardWithIDs[x]![y];
+      if (isNil(tileID)) {
+        newBoard[x]![y] = null;
+        continue;
+      }
+      const tile = tilesByID[tileID];
+      if (isNil(tile)) {
+        console.error("Error transforming board: ", boardWithIDs);
+        console.error("Tile Map: ", tilesByID);
+        return newBoard;
+      }
+      newBoard[x]![y] = tile.value;
+    }
+  }
+
+  return newBoard;
+}

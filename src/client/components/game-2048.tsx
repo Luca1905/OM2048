@@ -1,6 +1,5 @@
 import type React from "react";
 import { memo, useCallback, useEffect, useRef } from "react";
-import SuperJSON from "superjson";
 import { useGameContext } from "../hooks/useGameContext";
 import type { GameState } from "../types/game";
 import Board from "./board";
@@ -26,11 +25,7 @@ const Game2048: React.FC<GameProps> = memo(
     handleGameStateChange,
   }) => {
     const { moveTiles, gameState } = useGameContext(initialGameState);
-
-    useEffect(() => {
-      handleGameStateChange(gameState);
-    }, [gameState]);
-
+    const localMoveRef = useRef(false);
     const handleKeyDown = useCallback(
       (e: KeyboardEvent) => {
         if (!active) return;
@@ -38,23 +33,24 @@ const Game2048: React.FC<GameProps> = memo(
           ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)
         ) {
           e.preventDefault();
-        }
-        switch (e.code) {
-          case "ArrowUp":
-            moveTiles("move_up");
-            break;
-          case "ArrowDown":
-            moveTiles("move_down");
-            break;
-          case "ArrowLeft":
-            moveTiles("move_left");
-            break;
-          case "ArrowRight":
-            moveTiles("move_right");
-            break;
+          localMoveRef.current = true;
+          switch (e.code) {
+            case "ArrowUp":
+              moveTiles("move_up");
+              break;
+            case "ArrowDown":
+              moveTiles("move_down");
+              break;
+            case "ArrowLeft":
+              moveTiles("move_left");
+              break;
+            case "ArrowRight":
+              moveTiles("move_right");
+              break;
+          }
         }
       },
-      [moveTiles, active],
+      [active, moveTiles],
     );
 
     useEffect(() => {
@@ -63,6 +59,13 @@ const Game2048: React.FC<GameProps> = memo(
         window.removeEventListener("keydown", handleKeyDown);
       };
     }, [handleKeyDown]);
+
+    useEffect(() => {
+      if (localMoveRef.current) {
+        handleGameStateChange(gameState);
+        localMoveRef.current = false;
+      }
+    }, [gameState, handleGameStateChange]);
 
     return (
       <div

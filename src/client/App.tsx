@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import React, { useEffect, useState, useCallback } from "react";
+import type { SocketData, StoredState } from "src/shared/events";
 import Game2048 from "./components/game-2048";
 import { inferGameStateByBoard } from "./lib/util";
 import { createGames, loadGames, updateGame } from "./socket-io/event-emitters";
@@ -8,11 +8,34 @@ import styles from "./styles/index.module.css";
 import type { GameState } from "./types/game";
 
 function App() {
-  const [gameStates, setGameStates] = useState<GameState[]>();
+  const [gameStates, setGameStates] = useState<GameState[]>([]);
   const [selected, setSelected] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    let isMounted = true;
+    const fetchGames = async () => {
+      console.log("Fetching games...");
+      setIsLoading(true);
+      try {
+        const response = await loadGames();
+        console.log("Load games response:", response);
+
+        if ("error" in response) {
+          console.error("Failed loading games:", response.error);
+          setGameStates([]);
+        } else {
+          const inferredGameStates = response.data.map((board) =>
+            inferGameStateByBoard(board),
+          );
+          setGameStates(inferredGameStates);
+        }
+      } catch (error) {
+        console.error("Exception while fetching games:", error);
+        setGameStates([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     const handleConnect = () => {
       console.log("Connected to server");
@@ -23,90 +46,74 @@ function App() {
       console.warn("Socket disconnected:", reason);
     };
 
-    async function fetchGames() {
-      if (!isMounted) return;
-
-      console.log("Fetching games...");
-      const response = await loadGames();
-      console.log("Load games response:", response);
-
-      if ("error" in response) {
-        console.error("Failed loading games:", response.error);
-        return;
-      }
-
-      if (isMounted) {
-        const inferedGameStates = response.data.map((board) =>
-          inferGameStateByBoard(board),
-        );
-        setGameStates(inferedGameStates);
-      }
-    }
-
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("game:updated", handleServerUpdate);
 
-    if (!socket.connected) {
-      socket.connect();
-    } else {
+    if (socket.connected) {
       fetchGames();
+    } else {
+      socket.connect();
     }
 
     return () => {
-      isMounted = false;
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+
+      socket.off("game:updated", handleServerUpdate);
     };
   }, []);
 
-  async function handleGameStateChange(gameState: GameState) {
+  const handleServerUpdate = useCallback(
+    (
+      payload: SocketData,
+      ackCallback: (error: string | null, success: boolean) => void,
+    ) => {
+      console.log("Server update received:", payload);
+
+      setGameStates((prevGameStates) => {
+        const newGameStates = prevGameStates.map((gs) =>
+          gs.id === payload.id ? inferGameStateByBoard(payload) : gs,
+        );
+        return newGameStates;
+      });
+
+      ackCallback(null, true);
+    },
+    [],
+  );
+
+  const handleLocalStateChange = useCallback(async (gameState: GameState) => {
     const result = await updateGame(gameState);
     if (!result.success) {
-      console.error("Failed updating game State");
+      console.error("Failed updating game state on server");
     }
-  }
+  }, []);
 
-  const createInitialState = (): GameState => {
-    const id1 = uuidv4();
-    const id2 = uuidv4();
-    return {
-      id: uuidv4(),
-      board: [
-        [id1, id2, null, null],
-        [null, null, null, null],
-        [null, null, null, null],
-        [null, null, null, null],
-      ],
-      tilesById: {
-        [id1]: {
-          id: id1,
-          position: [0, 0],
-          value: 2,
-        },
-        [id2]: {
-          id: id2,
-          position: [0, 1],
-          value: 2,
-        },
-      },
-      tileIds: [id1, id2],
-      hasChanged: false,
-      score: 0,
-      status: "ongoing",
-    };
-  };
+  const createInitialBoard = useCallback((): StoredState => {
+    return [
+      [null, null, null, 2],
+      [null, null, null, null],
+      [null, null, null, null],
+      [2, null, null, null],
+    ];
+  }, []);
 
-  async function fillRedis(count: number) {
-    const newGameStates = new Array(count);
-    for (let i = 0; i < count; i++) {
-      newGameStates[i] = createInitialState();
-    }
-    console.log(newGameStates);
-    const result = await createGames(newGameStates);
-    if (!result.success) {
-      console.error("Failed creating games");
-    }
-  }
+  const handleCreateGames = useCallback(
+    async (count: number) => {
+      const newGameBoards: StoredState[] = new Array(count)
+        .fill(null)
+        .map(() => createInitialBoard());
+
+      const result = await createGames(newGameBoards);
+      if (!result.success) {
+        console.error("Failed creating games on server");
+      } else {
+        console.log(`${count} games creation request sent.`);
+      }
+    },
+    [createInitialBoard],
+  );
 
   return (
     <div className={styles.twenty48}>
@@ -114,23 +121,25 @@ function App() {
         <h1>OM2048</h1>
       </header>
       <main>
-        {
-          // <button type="submit" onClick={async () => await fillRedis(400)}>
-          //   CREATE 10.000 GAMES
-          // </button>
-        }
-        {gameStates !== undefined
-          ? gameStates.map((gameState) => (
-              <Game2048
-                key={gameState.id}
-                id={gameState.id}
-                active={gameState.id === selected}
-                initialGameState={gameState}
-                onClick={() => setSelected(gameState.id)}
-                handleGameStateChange={handleGameStateChange}
-              />
-            ))
-          : "loading"}
+        {isLoading ? (
+          <p>Loading games...</p>
+        ) : gameStates.length === 0 ? (
+          <p>No games found. Create some!</p>
+        ) : (
+          gameStates.map((gameState) => (
+            <Game2048
+              key={gameState.id}
+              id={gameState.id}
+              active={gameState.id === selected}
+              initialGameState={gameState}
+              onClick={() => setSelected(gameState.id)}
+              handleGameStateChange={handleLocalStateChange}
+            />
+          ))
+        )}
+        <button type="button" onClick={() => handleCreateGames(99)}>
+          CREATE 99 GAMES
+        </button>
       </main>
     </div>
   );

@@ -1,12 +1,18 @@
-import type { GameID, Response, StoredState } from "../../shared/events";
+import type {
+  GameID,
+  Response,
+  SocketData,
+  StoredState,
+} from "../../shared/events";
+import { boardWithIDsToNumberBoard } from "../lib/util";
 import type { GameState } from "../types/game";
 import { socket } from "./socket";
 
-export async function loadGames(): Promise<Response<{ id: string; board: StoredState }[]>> {
+export async function loadGames(): Promise<Response<SocketData[]>> {
   return new Promise((resolve) => {
     socket.emit(
       "games:list",
-      (error: string | null, states: {id: string, board: StoredState}[] | null) => {
+      (error: string | null, states: SocketData[] | null) => {
         if (error !== null) {
           console.error("Error loading game:", error);
           resolve({
@@ -33,29 +39,41 @@ export async function updateGame(
   gameState: GameState,
 ): Promise<{ success: boolean }> {
   return new Promise((resolve) => {
-    socket.emit("game:update", gameState, (res: Response<GameID>) => {
-      if ("error" in res) {
-        console.error("Error updating game:", res.error);
-        resolve({ success: false });
-      } else {
-        resolve({ success: true });
-      }
-    });
+    const boardWithNumbers = boardWithIDsToNumberBoard(
+      gameState.board,
+      gameState.tilesById,
+    );
+    socket.emit(
+      "game:update",
+      { id: gameState.id, board: boardWithNumbers },
+      (error: string | null, returnedGameID: GameID | null) => {
+        if (error !== null) {
+          console.error("Error updating game:", error);
+          resolve({ success: false });
+        } else {
+          resolve({ success: gameState.id === returnedGameID });
+        }
+      },
+    );
   });
 }
 
 export async function createGames(
-  gameStates: GameState[],
+  states: StoredState[],
 ): Promise<{ success: boolean }> {
   return new Promise((resolve) => {
-    socket.emit("games:create", gameStates, (res: Response<GameState[]>) => {
-      if ("error" in res) {
-        console.error("Error creating games:", res.error);
-        resolve({ success: false });
-      } else {
-        resolve({ success: true });
-      }
-    });
+    socket.emit(
+      "games:create",
+      states,
+      (error: string | null, success: boolean) => {
+        if (error !== null) {
+          console.error("Error creating games:", error);
+          resolve({ success: false });
+        } else {
+          resolve({ success });
+        }
+      },
+    );
   });
 }
 

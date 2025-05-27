@@ -12,7 +12,8 @@ type Action =
   | { type: "move_left" }
   | { type: "move_right" }
   | { type: "reset_game"; newGameID: string }
-  | { type: "update_status"; status: GameStatus };
+  | { type: "update_status"; status: GameStatus }
+  | { type: "sync_state"; state: GameState };
 
 function createBoard() {
   const board: (string | null)[][] = [];
@@ -310,6 +311,8 @@ export default function gameReducer(
         ...state,
         status: action.status,
       };
+    case "sync_state":
+      return action.state;
     default:
       return state;
   }
