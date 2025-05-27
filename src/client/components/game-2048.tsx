@@ -25,7 +25,9 @@ const Game2048: React.FC<GameProps> = memo(
     handleGameStateChange,
   }) => {
     const { moveTiles, gameState } = useGameContext(initialGameState);
+
     const localMoveRef = useRef(false);
+
     const handleKeyDown = useCallback(
       (e: KeyboardEvent) => {
         if (!active) return;
@@ -61,11 +63,11 @@ const Game2048: React.FC<GameProps> = memo(
     }, [handleKeyDown]);
 
     useEffect(() => {
-      if (localMoveRef.current) {
+      if (localMoveRef.current && gameState.hasChanged === false) {
         handleGameStateChange(gameState);
         localMoveRef.current = false;
       }
-    }, [gameState, handleGameStateChange]);
+    }, [gameState.hasChanged, handleGameStateChange, gameState]);
 
     return (
       <div

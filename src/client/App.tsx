@@ -84,6 +84,7 @@ function App() {
   );
 
   const handleLocalStateChange = useCallback(async (gameState: GameState) => {
+    console.log("Current State: ", gameState);
     const result = await updateGame(gameState);
     if (!result.success) {
       console.error("Failed updating game state on server");
