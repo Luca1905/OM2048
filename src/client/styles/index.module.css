@@ -7,7 +7,7 @@
 .twenty48 > main {
   display: grid;
   flex: 2;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(100, 1fr);
   gap: 16px;
   margin: 0;
   padding: 0;

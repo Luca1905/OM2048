@@ -18,12 +18,12 @@ function App() {
       setIsLoading(true);
       try {
         const response = await loadGames();
-        console.log("Load games response:", response);
 
         if ("error" in response) {
           console.error("Failed loading games:", response.error);
           setGameStates([]);
         } else {
+          console.log("Loaded games: ", response);
           const inferredGameStates = response.data.map((board) =>
             inferGameStateByBoard(board),
           );
@@ -122,6 +122,9 @@ function App() {
         <h1>OM2048</h1>
       </header>
       <main>
+        <button type="button" onClick={() => handleCreateGames(1)}>
+          CREATE 1 GAME
+        </button>
         {isLoading ? (
           <p>Loading games...</p>
         ) : gameStates.length === 0 ? (
@@ -137,13 +140,6 @@ function App() {
               handleGameStateChange={handleLocalStateChange}
             />
           ))
-        )}
-        {import.meta.env.MODE === "development" ? (
-          <button type="button" onClick={() => handleCreateGames(99)}>
-            CREATE 99 GAMES
-          </button>
-        ) : (
-          ""
         )}
       </main>
     </div>

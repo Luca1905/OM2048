@@ -104,6 +104,26 @@ async function setGame(
   }
 }
 
+async function createGames(
+  payload: StoredState[],
+  callback: (err: string | null, success: boolean) => void,
+) {
+  const tasks = payload.map((data) => {
+    const validState = storedStateSchema.parse(data);
+    const key = `${REDIS_GAME_PREFIX}${uuid()}`;
+    return redis.SET(key, SuperJSON.stringify(validState));
+  });
+
+  try {
+    console.log("Creating games: ", tasks.length);
+    await Promise.all(tasks);
+    callback(null, true);
+  } catch (err) {
+    console.error("Error updating game states in Redis:", err);
+    callback("Failed to update game state", false);
+  }
+}
+
 async function listGames(
   callback: (error: string | null, gameDataList: SocketData[] | null) => void,
 ) {
@@ -195,15 +215,12 @@ export function createApplication(
 
     socket.on("games:list", (callback) => listGames(callback));
     socket.on("games:create", (payload, callback) => {
-      for (const gs of payload) {
-        setGame({ id: uuid(), board: gs }, (error, gameId) => {
-          if (error !== null) {
-            console.error("Failed creating games: ", error);
-            callback(error, false);
-          }
-        });
-      }
-      callback(null, true);
+      createGames(payload, (error, success) => {
+        if (error !== null) {
+          callback("Failed creating games", false);
+        }
+        callback(null, true);
+      });
     });
 
     socket.on("disconnect", (reason) => {
@@ -217,7 +234,7 @@ export function createApplication(
 console.log("Creating Server ...");
 const httpServer = createServer();
 
-console.log("Connection allowed by: ",process.env.VITE_FRONTEND_URL!);
+console.log("Connection allowed by: ", process.env.VITE_FRONTEND_URL!);
 createApplication(httpServer, {
   cors: {
     origin: [process.env.VITE_FRONTEND_URL!],
