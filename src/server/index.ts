@@ -13,7 +13,7 @@ import {
   type StoredState,
   gameIDSchema,
   storedStateSchema,
-} from "src/shared/events";
+} from "../shared/events";
 
 import { isNil, zip } from "lodash";
 import { v4 as uuid } from "uuid";
@@ -214,15 +214,16 @@ export function createApplication(
 }
 
 // --- Server Initialization ---
+console.log("Creating Server ...");
 const httpServer = createServer();
 
-const io = createApplication(httpServer, {
+createApplication(httpServer, {
   cors: {
     origin: [import.meta.env.VITE_FRONTEND_URL],
   },
 });
 
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
+const PORT = Number(process.env.PORT) || 3000;
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`HTTP server listening on port ${PORT}`);
 });
