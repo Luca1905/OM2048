@@ -217,9 +217,10 @@ export function createApplication(
 console.log("Creating Server ...");
 const httpServer = createServer();
 
+console.log("Connection allowed by: ",process.env.VITE_FRONTEND_URL!);
 createApplication(httpServer, {
   cors: {
-    origin: [import.meta.env.VITE_FRONTEND_URL],
+    origin: [process.env.VITE_FRONTEND_URL!],
   },
 });
 
