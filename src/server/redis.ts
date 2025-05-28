@@ -5,8 +5,8 @@ const redis = createClient({
   disableClientInfo: true,
 });
 
-redis.on("error", (err) => {
-  throw err;
+redis.on('error', error => {
+    console.error('Redis client error:', error);
 });
 
 await redis.connect();
