@@ -138,12 +138,12 @@ function App() {
             />
           ))
         )}
-        {import.meta.env.DEV ? (
-          ""
-        ) : (
+        {import.meta.env.MODE === "development" ? (
           <button type="button" onClick={() => handleCreateGames(99)}>
             CREATE 99 GAMES
           </button>
+        ) : (
+          ""
         )}
       </main>
     </div>
