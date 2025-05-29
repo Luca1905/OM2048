@@ -23,8 +23,8 @@ RUN bun install --production
 # ─────────────────────────────────────────────────────────────
 # 5) Copy your source
 # ─────────────────────────────────────────────────────────────
-COPY src/server ./server
-COPY src/shared ./shared
+COPY src/server ./src/server
+COPY src/shared ./src/shared
 
 # ─────────────────────────────────────────────────────────────
 # 6) Open your HTTP port—and 6379 for the redis client
