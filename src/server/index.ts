@@ -234,7 +234,12 @@ export function createApplication(
 console.log("Creating Server ...");
 const httpServer = createServer();
 
-console.log("Connection allowed by: ", process.env.VITE_FRONTEND_URL!);
+//check environment variables
+console.log("Environment variables: ");
+console.log("VITE_FRONTEND_URL: ", process.env.VITE_FRONTEND_URL);
+console.log("VITE_BACKEND_URL: ", process.env.VITE_BACKEND_URL);
+console.log("UPSTASH_REDIS_URL: ", process.env.UPSTASH_REDIS_URL !== undefined);
+
 createApplication(httpServer, {
   cors: {
     origin: [process.env.VITE_FRONTEND_URL!],
