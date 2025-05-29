@@ -246,7 +246,7 @@ createApplication(httpServer, {
   },
 });
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`HTTP server listening on port ${PORT}`);
 });
