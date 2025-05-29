@@ -16,8 +16,6 @@
     "check:write": "biome check --write ."
   },
   "dependencies": {
-    "@trpc/client": "^11.1.2",
-    "@trpc/server": "^11.1.2",
     "@types/redis": "^4.0.11",
     "cors": "^2.8.5",
     "express": "^5.1.0",
@@ -25,28 +23,23 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-responsive": "9.0.2",
-    "redis": "^5.1.0",
+    "redis": "^5.1.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "superjson": "^2.2.2",
     "uuid": "^11.1.0",
-    "zod": "^3.25.20"
+    "zod": "^3.25.36"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@eslint/js": "^9.27.0",
-    "@types/lodash": "^4.17.17",
-    "@types/react": "^19.1.5",
-    "@types/react-dom": "^19.1.5",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
-    "@vitejs/plugin-react": "^4.4.1",
-    "eslint": "^9.27.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.1.0",
+    "@types/lodash": "^4.17.17",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.0",
+    "globals": "^16.2.0",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.32.1",
     "vite": "^6.3.5"
   }
 }
