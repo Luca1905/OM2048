@@ -13,6 +13,10 @@ WORKDIR /app
 # ─────────────────────────────────────────────────────────────
 # ARG UPSTASH_REDIS_URL
 # ENV UPSTASH_REDIS_URL=${UPSTASH_REDIS_URL}
+# ARG VITE_FRONTEND_URL
+# ENV VITE_FRONTEND_URL=${VITE_FRONTEND_URL}
+# ARG VITE_BACKEND_URL
+# ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
 
 # ─────────────────────────────────────────────────────────────
 # 4) Install production deps
@@ -39,4 +43,4 @@ RUN bun run build:backend
 # ─────────────────────────────────────────────────────────────
 # 8) run the server
 # ─────────────────────────────────────────────────────────────
-CMD ["node", "./dist/index.js"]
+CMD ["bun", "./dist/index.js"]
