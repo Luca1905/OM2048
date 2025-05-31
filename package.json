@@ -9,8 +9,6 @@
     "start:frontend": "vite preview --host 0.0.0.0 --port 80",
     "build:frontend": "vite build",
     "start:backend": "bun run src/server",
-    "docker:build": "docker build -t om-2048-backend .",
-    "docker:run": "docker run --name om-2048-backend -p 3000:3000 -p 6379:6379 -e UPSTASH_REDIS_URL -e VITE_FRONTEND_URL -e VITE_BACKEND_URL om-2048-backend",
     "typecheck": "tsc --noEmit",
     "check": "biome check .",
     "check:unsafe": "biome check --write --unsafe .",
