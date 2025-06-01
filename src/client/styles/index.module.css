@@ -17,9 +17,11 @@
 
 .twenty48 > header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-self: center;
-  margin: calc(var(--pixel-size) * 1) calc(var(--pixel-size) * 0);
+  justify-content: center;
+  gap: calc(var(--pixel-size) * 1);
+  margin: calc(var(--pixel-size) * 1) 0;
 }
 
 .twenty48 > header > * {

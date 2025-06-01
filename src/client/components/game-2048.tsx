@@ -65,6 +65,7 @@ const Game2048: React.FC<GameProps> = memo(
     useEffect(() => {
       if (localMoveRef.current && gameState.hasChanged === false) {
         handleGameStateChange(gameState);
+        console.log("Triggered rerender with change: ", gameState);
         localMoveRef.current = false;
       }
     }, [gameState.hasChanged, handleGameStateChange, gameState]);

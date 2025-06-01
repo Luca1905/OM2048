@@ -51,6 +51,7 @@ async function getGame(
       return;
     }
     const parsedBoard = storedStateSchema.parse(SuperJSON.parse(res));
+    console.log("Read board: ", parsedBoard);
     callback(null, { id: validId, board: parsedBoard });
   } catch (error) {
     console.error(`Error in getGame for ID ${id}:`, error);
@@ -106,21 +107,22 @@ async function setGame(
 
 async function createGames(
   payload: StoredState[],
-  callback: (err: string | null, success: boolean) => void,
+  callback: (err: string | null, ids: (GameID | null)[]) => void,
 ) {
   const tasks = payload.map((data) => {
     const validState = storedStateSchema.parse(data);
-    const key = `${REDIS_GAME_PREFIX}${uuid()}`;
-    return redis.SET(key, SuperJSON.stringify(validState));
+    const id = uuid();
+    const key = `${REDIS_GAME_PREFIX}${id}`;
+    redis.SET(key, SuperJSON.stringify(validState));
+    return id;
   });
 
   try {
-    console.log("Creating games: ", tasks.length);
-    await Promise.all(tasks);
-    callback(null, true);
+    const responses = await Promise.all(tasks);
+    callback(null, responses);
   } catch (err) {
     console.error("Error updating game states in Redis:", err);
-    callback("Failed to update game state", false);
+    callback("Failed to update game state", []);
   }
 }
 
@@ -215,11 +217,11 @@ export function createApplication(
 
     socket.on("games:list", (callback) => listGames(callback));
     socket.on("games:create", (payload, callback) => {
-      createGames(payload, (error, success) => {
+      createGames(payload, (error, ids) => {
         if (error !== null) {
-          callback("Failed creating games", false);
+          callback("Failed creating games", ids);
         }
-        callback(null, true);
+        callback(null, ids);
       });
     });
 

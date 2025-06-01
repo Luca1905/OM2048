@@ -8,6 +8,34 @@ import { boardWithIDsToNumberBoard } from "../lib/util";
 import type { GameState } from "../types/game";
 import { socket } from "./socket";
 
+export async function readGame(id: GameID): Promise<Response<SocketData>> {
+  return new Promise((resolve) => {
+    socket.emit(
+      "game:read",
+      id,
+      (error: string | null, state: SocketData | null) => {
+        if (error !== null) {
+          console.error("Error loading game:", error);
+          resolve({
+            error: error,
+          });
+          return;
+        }
+
+        if (state === null) {
+          console.error("Unknown error loading game");
+          resolve({
+            error: "Unknown Error",
+          });
+          return;
+        }
+
+        resolve({ data: state });
+      },
+    );
+  });
+}
+
 export async function loadGames(): Promise<Response<SocketData[]>> {
   return new Promise((resolve) => {
     socket.emit(
@@ -60,17 +88,17 @@ export async function updateGame(
 
 export async function createGames(
   states: StoredState[],
-): Promise<{ success: boolean }> {
+): Promise<{ gameIDs: GameID[] }> {
   return new Promise((resolve) => {
     socket.emit(
       "games:create",
       states,
-      (error: string | null, success: boolean) => {
+      (error: string | null, ids: (GameID | null)[]) => {
         if (error !== null) {
           console.error("Error creating games:", error);
-          resolve({ success: false });
+          resolve({ gameIDs: [] });
         } else {
-          resolve({ success });
+          resolve({ gameIDs: ids.filter((id) => id !== null) });
         }
       },
     );

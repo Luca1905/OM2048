@@ -2,7 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import type { SocketData, StoredState } from "src/shared/events";
 import Game2048 from "./components/game-2048";
 import { inferGameStateByBoard } from "./lib/util";
-import { createGames, loadGames, updateGame } from "./socket-io/event-emitters";
+import {
+  createGames,
+  loadGames,
+  readGame,
+  updateGame,
+} from "./socket-io/event-emitters";
 import { socket } from "./socket-io/socket";
 import styles from "./styles/index.module.css";
 import type { GameState } from "./types/game";
@@ -100,31 +105,48 @@ function App() {
     ];
   }, []);
 
-  const handleCreateGames = useCallback(
-    async (count: number) => {
-      const newGameBoards: StoredState[] = new Array(count)
-        .fill(null)
-        .map(() => createInitialBoard());
+const handleCreateGames = useCallback(
+  async (count: number) => {
+    const newBoards: StoredState[] = Array.from(
+      { length: count },
+      () => createInitialBoard()
+    );
 
-      const result = await createGames(newGameBoards);
-      if (!result.success) {
-        console.error("Failed creating games on server");
-      } else {
-        console.log(`${count} games creation request sent.`);
+    const result = await createGames(newBoards);
+    console.log(`${count} games creation request sent.`);
+
+    const responses = await Promise.all(
+      result.gameIDs.map((id) => readGame(id))
+    );
+
+    const incomingStates: GameState[] = [];
+    for (const res of responses) {
+      if ("error" in res) {
+        console.error("failed readGame:", res.error);
+        continue;
       }
-    },
-    [createInitialBoard],
-  );
+      incomingStates.push(inferGameStateByBoard(res.data));
+    }
+
+    if (incomingStates.length === 0) {
+      console.warn("no new games to append");
+      return;
+    }
+
+    setGameStates((prev) => [...prev, ...incomingStates]);
+  },
+  [createInitialBoard]
+);
 
   return (
     <div className={styles.twenty48}>
       <header>
         <h1>OM2048</h1>
-      </header>
-      <main>
         <button type="button" onClick={() => handleCreateGames(1)}>
           CREATE 1 GAME
         </button>
+      </header>
+      <main>
         {isLoading ? (
           <p>Loading games...</p>
         ) : gameStates.length === 0 ? (

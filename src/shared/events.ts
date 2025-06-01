@@ -24,13 +24,14 @@ export interface ServerEvents {
     callback: (error: string | null, success: boolean) => void,
   ) => void;
 }
+
 export interface ClientEvents {
   "games:list": (
     callback: (error: string | null, states: SocketData[] | null) => void,
   ) => void;
   "games:create": (
     payload: StoredState[],
-    callback: (error: string | null, success: boolean) => void,
+    callback: (error: string | null, ids: (GameID | null)[]) => void,
   ) => void;
   "game:read": (
     id: GameID,
