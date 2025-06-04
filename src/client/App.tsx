@@ -142,6 +142,7 @@ const handleCreateGames = useCallback(
     <div className={styles.twenty48}>
       <header>
         <h1>OM2048</h1>
+        <a href="https://github.com/Luca1905/OM2048">PLS star</a>
         <button type="button" onClick={() => handleCreateGames(1)}>
           CREATE 1 GAME
         </button>
