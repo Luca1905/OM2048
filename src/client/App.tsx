@@ -11,7 +11,6 @@ import {
 import { socket } from "./socket-io/socket";
 import styles from "./styles/index.module.css";
 import type { GameState } from "./types/game";
-
 function App() {
   const [gameStates, setGameStates] = useState<GameState[]>([]);
   const [selected, setSelected] = useState<string>("");
@@ -105,47 +104,48 @@ function App() {
     ];
   }, []);
 
-const handleCreateGames = useCallback(
-  async (count: number) => {
-    const newBoards: StoredState[] = Array.from(
-      { length: count },
-      () => createInitialBoard()
-    );
+  const handleCreateGames = useCallback(
+    async (count: number) => {
+      const newBoards: StoredState[] = Array.from({ length: count }, () =>
+        createInitialBoard(),
+      );
 
-    const result = await createGames(newBoards);
-    console.log(`${count} games creation request sent.`);
+      const result = await createGames(newBoards);
+      console.log(`${count} games creation request sent.`);
 
-    const responses = await Promise.all(
-      result.gameIDs.map((id) => readGame(id))
-    );
+      const responses = await Promise.all(
+        result.gameIDs.map((id) => readGame(id)),
+      );
 
-    const incomingStates: GameState[] = [];
-    for (const res of responses) {
-      if ("error" in res) {
-        console.error("failed readGame:", res.error);
-        continue;
+      const incomingStates: GameState[] = [];
+      for (const res of responses) {
+        if ("error" in res) {
+          console.error("failed readGame:", res.error);
+          continue;
+        }
+        incomingStates.push(inferGameStateByBoard(res.data));
       }
-      incomingStates.push(inferGameStateByBoard(res.data));
-    }
 
-    if (incomingStates.length === 0) {
-      console.warn("no new games to append");
-      return;
-    }
+      if (incomingStates.length === 0) {
+        console.warn("no new games to append");
+        return;
+      }
 
-    setGameStates((prev) => [...prev, ...incomingStates]);
-  },
-  [createInitialBoard]
-);
+      setGameStates((prev) => [...incomingStates, ...prev]);
+    },
+    [createInitialBoard],
+  );
 
   return (
     <div className={styles.twenty48}>
       <header>
         <h1>OM2048</h1>
         <a href="https://github.com/Luca1905/OM2048">PLS star</a>
-        <button type="button" onClick={() => handleCreateGames(1)}>
-          CREATE 1 GAME
-        </button>
+        {!isLoading && (
+          <button type="button" onClick={() => handleCreateGames(1)}>
+            CREATE 1 BOARD
+          </button>
+        )}
       </header>
       <main>
         {isLoading ? (
