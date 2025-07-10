@@ -1,5 +1,6 @@
-import type { Server as HttpServer } from "node:http";
-import { createServer } from "node:http";
+import fs from "node:fs";
+import type { Server as HttpServer } from "node:https";
+import { createServer } from "node:https";
 
 import type { ServerOptions } from "socket.io";
 import { Server } from "socket.io";
@@ -142,22 +143,15 @@ async function listGames(
           try {
             const gameIdString = fullKey.replace(REDIS_GAME_PREFIX, "");
             const idValidation = gameIDSchema.safeParse(gameIdString);
-
             if (!idValidation.success) {
               console.warn(
-                `Skipping game with invalid ID format from key ${fullKey} during listGames:`,
-                idValidation.error instanceof z.ZodError && z.prettifyError
-                  ? z.prettifyError(idValidation.error)
-                  : idValidation.error.message,
+                `Skipping game with invalid ID format from key ${fullKey}`,
               );
               continue;
             }
             const validGameId = idValidation.data;
             const board = storedStateSchema.parse(SuperJSON.parse(json));
-            gameList.push({
-              id: validGameId,
-              board: board,
-            });
+            gameList.push({ id: validGameId, board });
           } catch (parseError) {
             let errorContext = String(parseError);
             if (parseError instanceof z.ZodError && z.prettifyError) {
@@ -169,8 +163,6 @@ async function listGames(
               "Failed to parse game state from Redis MGET result for key:",
               fullKey,
               errorContext,
-              "JSON:",
-              json,
             );
           }
         }
@@ -220,6 +212,7 @@ export function createApplication(
       createGames(payload, (error, ids) => {
         if (error !== null) {
           callback("Failed creating games", ids);
+          return;
         }
         callback(null, ids);
       });
@@ -233,22 +226,30 @@ export function createApplication(
 }
 
 // --- Server Initialization ---
-console.log("Creating Server ...");
-const httpServer = createServer();
+const key = fs.readFileSync(
+  "/etc/letsencrypt/live/om2048-backend.lucawang.me/privkey.pem",
+  "utf8",
+);
+const cert = fs.readFileSync(
+  "/etc/letsencrypt/live/om2048-backend.lucawang.me/cert.pem",
+  "utf8",
+);
 
-//check environment variables
-console.log("Environment variables: ");
-console.log("VITE_FRONTEND_URL: ", process.env.VITE_FRONTEND_URL);
-console.log("VITE_BACKEND_URL: ", process.env.VITE_BACKEND_URL);
-console.log("UPSTASH_REDIS_URL: ", process.env.UPSTASH_REDIS_URL !== undefined);
+console.log("Creating HTTPS Server ...");
+const httpsServer: HttpServer = createServer({ key, cert });
 
-createApplication(httpServer, {
+console.log("Environment variables:");
+console.log("VITE_FRONTEND_URL:", process.env.VITE_FRONTEND_URL);
+console.log("VITE_BACKEND_URL:", process.env.VITE_BACKEND_URL);
+console.log("UPSTASH_REDIS_URL:", process.env.UPSTASH_REDIS_URL !== undefined);
+
+createApplication(httpsServer, {
   cors: {
     origin: [process.env.VITE_FRONTEND_URL!],
   },
 });
 
 const PORT = Number(process.env.PORT) || 3000;
-httpServer.listen(PORT, "0.0.0.0", () => {
-  console.log(`HTTP server listening on port ${PORT}`);
+httpsServer.listen(PORT, "0.0.0.0", () => {
+  console.log(`HTTPS server listening on port ${PORT}`);
 });
