@@ -1,4 +1,6 @@
 # OM2048
+![banner](https://github.com/user-attachments/assets/45b53d2b-5d01-4a5e-b31a-5bf38a781f95)
+
 
 OM2048 is a multiplayer version of the classic 2048 game. There is one single canvas with 10.000 games, where all players can make moves that are shared with everyone.
 
