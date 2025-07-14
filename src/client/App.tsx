@@ -146,6 +146,11 @@ function App() {
             CREATE 1 BOARD
           </button>
         )}
+        <div style={{ gap: 16 ,display: "flex", flexDirection: "row" }}>
+          <p>Won Games: {gameStates.filter((game) => game.status === "won").length}</p>
+          <p>Total Games: {gameStates.length}</p>
+          <p>Ongoing Games: {gameStates.filter((game) => game.status === "ongoing").length}</p>
+        </div>
       </header>
       <main>
         {isLoading ? (

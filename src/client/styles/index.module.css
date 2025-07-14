@@ -10,9 +10,11 @@
   grid-template-columns: repeat(100, 1fr);
   gap: 16px;
   margin: 0;
-  padding-top: calc(var(--pixel-size) * 24); 
+  margin-top: calc(var(--pixel-size) * 31); 
   width: 100%;
   justify-items: center;
+  border-style: dotted;
+  border-color: blue;
 }
 
 .twenty48 > header {
@@ -20,14 +22,13 @@
   top: 0;
   left: 0;
   right: 0;
-  background-color: white; /* Add background to prevent content showing through */
-  z-index: 100; /* High z-index to ensure header stays above all content */
+  background-color: white;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: calc(var(--pixel-size) * 1);
-  padding: calc(var(--pixel-size) * 1) 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: add shadow for better visual separation */
 }
 

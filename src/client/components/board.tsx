@@ -28,7 +28,7 @@ const Board: React.FC<BoardProps> = memo(({ gameState }) => {
       const tile = gameState.tilesById[tileId];
 
       if (!tile) {
-        return <div key={tileId}>not available</div>;
+        return <></>;
       }
 
       if (tile.id === null) {
