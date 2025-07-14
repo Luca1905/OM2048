@@ -16,14 +16,14 @@ OM2048 is a multiplayer version of the classic 2048 game. There is one single ca
 ## Prerequisites
 
 - [Bun](https://bun.sh/) (v1.0.0 or higher)
-- [Redis](https://redis.io/) (v5.0 or higher)
+- [Redis](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-redis/) (v5.0 or higher)
 - Node.js (v18 or higher)
 
 ## Setup Instructions
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/OM2048.git
+   git clone https://github.com/Luca1905/OM2048
    cd OM2048
    ```
 
@@ -35,8 +35,7 @@ OM2048 is a multiplayer version of the classic 2048 game. There is one single ca
 3. Set up environment variables:
    Create a `.env` file in the root directory with the following variables:
    ```
-   REDIS_URL=redis://localhost:6379
-   PORT=3000
+   cp .env.example .env
    ```
 
 4. Start Redis server:

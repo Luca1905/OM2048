@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import type { Server as HttpServer } from "node:https";
-import { createServer } from "node:https";
+import type { Server as HttpsServer } from "node:https";
+import { createServer as createHttpsServer } from "node:https";
+import { createServer as createHttpServer } from "node:https";
 
 import type { ServerOptions } from "socket.io";
 import { Server } from "socket.io";
@@ -137,6 +139,10 @@ async function listGames(
       MATCH: "game:*",
       COUNT: 100,
     })) {
+      if (keys.length < 1) {
+        console.log("No games");
+        continue;
+      }
       const results = await redis.MGET(keys);
       for (const [fullKey, json] of zip(keys, results)) {
         if (!isNil(json) && fullKey !== undefined) {
@@ -225,31 +231,36 @@ export function createApplication(
   return io;
 }
 
-// --- Server Initialization ---
-const key = fs.readFileSync(
-  "/etc/letsencrypt/live/om2048-backend.lucawang.me/privkey.pem",
-  "utf8",
-);
-const cert = fs.readFileSync(
-  "/etc/letsencrypt/live/om2048-backend.lucawang.me/cert.pem",
-  "utf8",
-);
+let httpServer: HttpServer | HttpsServer | undefined = undefined;
+if (process.env.PROD === "true") {
+  // --- Server Initialization ---
+  const key = fs.readFileSync(
+    "/etc/letsencrypt/live/om2048-backend.lucawang.me/privkey.pem",
+    "utf8",
+  );
+  const cert = fs.readFileSync(
+    "/etc/letsencrypt/live/om2048-backend.lucawang.me/cert.pem",
+    "utf8",
+  );
 
-console.log("Creating HTTPS Server ...");
-const httpsServer: HttpServer = createServer({ key, cert });
+  console.log("Creating HTTPS Server ...");
+  httpServer = createHttpsServer({ key, cert });
+} else {
+  httpServer = createHttpServer();
+}
 
 console.log("Environment variables:");
 console.log("VITE_FRONTEND_URL:", process.env.VITE_FRONTEND_URL);
 console.log("VITE_BACKEND_URL:", process.env.VITE_BACKEND_URL);
 console.log("UPSTASH_REDIS_URL:", process.env.UPSTASH_REDIS_URL !== undefined);
 
-createApplication(httpsServer, {
+createApplication(httpServer, {
   cors: {
     origin: [process.env.VITE_FRONTEND_URL!],
   },
 });
 
 const PORT = Number(process.env.PORT) || 3000;
-httpsServer.listen(PORT, "0.0.0.0", () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`HTTPS server listening on port ${PORT}`);
 });
