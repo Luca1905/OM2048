@@ -142,7 +142,7 @@ function App() {
         <h1>OM2048</h1>
         <a href="https://github.com/Luca1905/OM2048">PLS star</a>
         {!isLoading && (
-          <button type="button" onClick={() => handleCreateGames(1)}>
+          <button type="button" onClick={() => handleCreateGames(1_000)}>
             CREATE 1 BOARD
           </button>
         )}
