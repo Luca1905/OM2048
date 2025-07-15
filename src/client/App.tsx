@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { SocketData, StoredState } from "src/shared/events";
-import Game2048 from "./components/game-2048";
+import GameGrid from "./components/gameGrid";
 import { inferGameStateByBoard } from "./lib/util";
 import {
   createGames,
@@ -11,9 +11,9 @@ import {
 import { socket } from "./socket-io/socket";
 import styles from "./styles/index.module.css";
 import type { GameState } from "./types/game";
+
 function App() {
   const [gameStates, setGameStates] = useState<GameState[]>([]);
-  const [selected, setSelected] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -146,10 +146,16 @@ function App() {
             CREATE 1 BOARD
           </button>
         )}
-        <div style={{ gap: 16 ,display: "flex", flexDirection: "row" }}>
-          <p>Won Games: {gameStates.filter((game) => game.status === "won").length}</p>
+        <div style={{ gap: 16, display: "flex", flexDirection: "row" }}>
+          <p>
+            Won Games:{" "}
+            {gameStates.filter((game) => game.status === "won").length}
+          </p>
           <p>Total Games: {gameStates.length}</p>
-          <p>Ongoing Games: {gameStates.filter((game) => game.status === "ongoing").length}</p>
+          <p>
+            Ongoing Games:{" "}
+            {gameStates.filter((game) => game.status === "ongoing").length}
+          </p>
         </div>
       </header>
       <main>
@@ -158,16 +164,10 @@ function App() {
         ) : gameStates.length === 0 ? (
           <p>No games found. Create some!</p>
         ) : (
-          gameStates.map((gameState) => (
-            <Game2048
-              key={gameState.id}
-              id={gameState.id}
-              active={gameState.id === selected}
-              initialGameState={gameState}
-              onClick={() => setSelected(gameState.id)}
-              handleGameStateChange={handleLocalStateChange}
-            />
-          ))
+          <GameGrid
+            gameStates={gameStates}
+            handleLocalStateChange={handleLocalStateChange}
+          />
         )}
       </main>
     </div>

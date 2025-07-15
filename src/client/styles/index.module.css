@@ -4,13 +4,13 @@
   align-items: center;
 }
 
-.twenty48 > main {
+.twenty48 > main > div > div {
   display: grid;
   flex: 2;
   grid-template-columns: repeat(100, 1fr);
   gap: 16px;
   margin: 0;
-  margin-top: calc(var(--pixel-size) * 31); 
+  margin-top: calc(var(--pixel-size) * 31);
   width: 100%;
   justify-items: center;
   border-style: dotted;
