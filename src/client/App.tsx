@@ -147,7 +147,7 @@ function App() {
       <header>
         <h1>OM2048</h1>
         <a href="https://github.com/Luca1905/OM2048">PLS star</a>
-          <button type="button" onClick={() => handleCreateGames(10_000)}>
+          <button type="button" onClick={() => handleCreateGames(100)}>
             CREATE 1 BOARD
           </button>
         <div style={{ gap: 16 ,display: "flex", flexDirection: "row" }}>
