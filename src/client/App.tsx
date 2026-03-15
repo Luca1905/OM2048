@@ -16,6 +16,26 @@ function App() {
   const [selected, setSelected] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const handleServerUpdate = useCallback((payload: SocketData) => {
+    console.log("Server update received:", payload);
+
+    setGameStates((prevGameStates) => {
+      const existingIndex = prevGameStates.findIndex(
+        (gs) => gs.id === payload.id,
+      );
+      const updatedGameState = inferGameStateByBoard(payload);
+
+      if (existingIndex === -1) {
+        // New game appeared via websocket update
+        return [updatedGameState, ...prevGameStates];
+      }
+
+      const next = [...prevGameStates];
+      next[existingIndex] = updatedGameState;
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const fetchGames = async () => {
       console.log("Fetching games...");
@@ -42,7 +62,7 @@ function App() {
     };
 
     const handleConnect = () => {
-      console.log("Connected to server");
+      console.log("Connected to server via websocket");
       fetchGames();
     };
 
@@ -50,42 +70,28 @@ function App() {
       console.warn("Socket disconnected:", reason);
     };
 
+    const handleConnectError = (error: Error) => {
+      console.error("Socket connection error:", error);
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
     socket.on("game:updated", handleServerUpdate);
 
-    if (socket.connected) {
-      fetchGames();
-    } else {
+    if (!socket.connected) {
       socket.connect();
+    } else {
+      fetchGames();
     }
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
-
+      socket.off("connect_error", handleConnectError);
       socket.off("game:updated", handleServerUpdate);
     };
-  }, []);
-
-  const handleServerUpdate = useCallback(
-    (
-      payload: SocketData,
-      ackCallback: (error: string | null, success: boolean) => void,
-    ) => {
-      console.log("Server update received:", payload);
-
-      setGameStates((prevGameStates) => {
-        const newGameStates = prevGameStates.map((gs) =>
-          gs.id === payload.id ? inferGameStateByBoard(payload) : gs,
-        );
-        return newGameStates;
-      });
-
-      ackCallback(null, true);
-    },
-    [],
-  );
+  }, [handleServerUpdate]);
 
   const handleLocalStateChange = useCallback(async (gameState: GameState) => {
     console.log("Current State: ", gameState);
@@ -141,11 +147,9 @@ function App() {
       <header>
         <h1>OM2048</h1>
         <a href="https://github.com/Luca1905/OM2048">PLS star</a>
-        {!isLoading && (
-          <button type="button" onClick={() => handleCreateGames(1_000)}>
+          <button type="button" onClick={() => handleCreateGames(10_000)}>
             CREATE 1 BOARD
           </button>
-        )}
         <div style={{ gap: 16 ,display: "flex", flexDirection: "row" }}>
           <p>Won Games: {gameStates.filter((game) => game.status === "won").length}</p>
           <p>Total Games: {gameStates.length}</p>
