@@ -136,6 +136,29 @@ async function listGames(
 ) {
   try {
     const gameList: SocketData[] = [];
+    // #region agent log
+    try {
+      const payload = {
+        sessionId: "18c90c",
+        runId: "pre-fix",
+        hypothesisId: "H1",
+        location: "src/server/index.ts:listGames",
+        message: "listGames called",
+        data: {},
+        timestamp: Date.now(),
+      };
+      // Write NDJSON line to debug log file
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const fsDebug = require("node:fs") as typeof import("node:fs");
+      fsDebug.appendFile(
+        "/Volumes/Delta/code/OM2048/.cursor/debug-18c90c.log",
+        JSON.stringify(payload) + "\n",
+        () => {},
+      );
+    } catch {
+      // ignore debug logging failures
+    }
+    // #endregion
     for await (const keys of redis.scanIterator({
       TYPE: "string",
       MATCH: "game:*",
@@ -155,6 +178,30 @@ async function listGames(
               console.warn(
                 `Skipping game with invalid ID format from key ${fullKey}`,
               );
+              // #region agent log
+              try {
+                const payload = {
+                  sessionId: "18c90c",
+                  runId: "pre-fix",
+                  hypothesisId: "H2",
+                  location: "src/server/index.ts:listGames",
+                  message: "Skipping key with invalid game ID format",
+                  data: {
+                    fullKey,
+                  },
+                  timestamp: Date.now(),
+                };
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const fsDebug = require("node:fs") as typeof import("node:fs");
+                fsDebug.appendFile(
+                  "/Volumes/Delta/code/OM2048/.cursor/debug-18c90c.log",
+                  JSON.stringify(payload) + "\n",
+                  () => {},
+                );
+              } catch {
+                // ignore debug logging failures
+              }
+              // #endregion
               continue;
             }
             const validGameId = idValidation.data;
