@@ -1,0 +1,14 @@
+[Unit]
+Description=OM2048 Backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/om2048
+EnvironmentFile=/opt/om2048/.env.production
+ExecStart=/root/.bun/bin/bun run src/server/index.ts
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

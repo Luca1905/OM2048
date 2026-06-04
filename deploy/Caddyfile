@@ -1,0 +1,3 @@
+om2048-backend.lucawang.me {
+	reverse_proxy localhost:3000
+}

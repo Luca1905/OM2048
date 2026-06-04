@@ -1,8 +1,4 @@
-import fs from "node:fs";
-import type { Server as HttpServer } from "node:https";
-import type { Server as HttpsServer } from "node:https";
-import { createServer as createHttpsServer } from "node:https";
-import { createServer as createHttpServer } from "node:https";
+import { type Server as HttpServer, createServer } from "node:http";
 
 import type { ServerOptions } from "socket.io";
 import { Server } from "socket.io";
@@ -231,36 +227,22 @@ export function createApplication(
   return io;
 }
 
-let httpServer: HttpServer | HttpsServer | undefined = undefined;
-if (process.env.PROD === "true") {
-  // --- Server Initialization ---
-  const key = fs.readFileSync(
-    "/etc/letsencrypt/live/om2048-backend.lucawang.me/privkey.pem",
-    "utf8",
-  );
-  const cert = fs.readFileSync(
-    "/etc/letsencrypt/live/om2048-backend.lucawang.me/cert.pem",
-    "utf8",
-  );
+const httpServer: HttpServer = createServer();
 
-  console.log("Creating HTTPS Server ...");
-  httpServer = createHttpsServer({ key, cert });
-} else {
-  httpServer = createHttpServer();
-}
+const allowedOrigins = process.env.VITE_FRONTEND_URL
+  ? process.env.VITE_FRONTEND_URL.split(",")
+  : ["http://localhost:5173"];
 
-console.log("Environment variables:");
-console.log("VITE_FRONTEND_URL:", process.env.VITE_FRONTEND_URL);
-console.log("VITE_BACKEND_URL:", process.env.VITE_BACKEND_URL);
-console.log("UPSTASH_REDIS_URL:", process.env.UPSTASH_REDIS_URL !== undefined);
+console.log("Allowed origins:", allowedOrigins);
+console.log("UPSTASH_REDIS_URL set:", process.env.UPSTASH_REDIS_URL !== undefined);
 
 createApplication(httpServer, {
   cors: {
-    origin: [process.env.VITE_FRONTEND_URL!],
+    origin: allowedOrigins,
   },
 });
 
 const PORT = Number(process.env.PORT) || 3000;
 httpServer.listen(PORT, "0.0.0.0", () => {
-  console.log(`HTTPS server listening on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
