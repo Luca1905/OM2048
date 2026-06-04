@@ -1,5 +1,10 @@
 import { createClient } from "redis";
 
+if (!process.env.UPSTASH_REDIS_URL) {
+  console.error("UPSTASH_REDIS_URL is not set. Exiting.");
+  process.exit(1);
+}
+
 const redis = createClient({
   url: process.env.UPSTASH_REDIS_URL,
   disableClientInfo: true,

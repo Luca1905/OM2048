@@ -1,5 +1,6 @@
 import type {
   GameID,
+  PaginatedGamesResponse,
   Response,
   SocketData,
   StoredState,
@@ -36,28 +37,27 @@ export async function readGame(id: GameID): Promise<Response<SocketData>> {
   });
 }
 
-export async function loadGames(): Promise<Response<SocketData[]>> {
+export async function loadGamesPage(
+  cursor: string | null,
+): Promise<Response<PaginatedGamesResponse>> {
   return new Promise((resolve) => {
     socket.emit(
       "games:list",
-      (error: string | null, states: SocketData[] | null) => {
+      cursor,
+      (error: string | null, result: PaginatedGamesResponse | null) => {
         if (error !== null) {
-          console.error("Error loading game:", error);
-          resolve({
-            error: error,
-          });
+          console.error("Error loading games:", error);
+          resolve({ error });
           return;
         }
 
-        if (states === null) {
-          console.error("Unknown error loading game");
-          resolve({
-            error: "Unknown Error",
-          });
+        if (result === null) {
+          console.error("Unknown error loading games");
+          resolve({ error: "Unknown Error" });
           return;
         }
 
-        resolve({ data: states });
+        resolve({ data: result });
       },
     );
   });

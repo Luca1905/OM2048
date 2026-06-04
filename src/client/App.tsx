@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { SocketData, StoredState } from "src/shared/events";
 import Game2048 from "./components/game-2048";
 import { inferGameStateByBoard } from "./lib/util";
 import {
   createGames,
-  loadGames,
+  loadGamesPage,
   readGame,
   updateGame,
 } from "./socket-io/event-emitters";
@@ -15,6 +15,9 @@ function App() {
   const [gameStates, setGameStates] = useState<GameState[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const cursorRef = useRef<string | null>(null);
 
   const handleServerUpdate = useCallback((payload: SocketData) => {
     console.log("Server update received:", payload);
@@ -36,20 +39,41 @@ function App() {
     });
   }, []);
 
+  const loadMore = useCallback(async () => {
+    setIsLoadingMore(true);
+    try {
+      const response = await loadGamesPage(cursorRef.current);
+      if ("error" in response) {
+        console.error("Failed loading more games:", response.error);
+        return;
+      }
+      cursorRef.current = response.data.cursor;
+      if (response.data.cursor === null) setHasMore(false);
+      const newStates = response.data.games.map(inferGameStateByBoard);
+      setGameStates((prev) => [...prev, ...newStates]);
+    } catch (error) {
+      console.error("Exception while loading more games:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchGames = async () => {
       console.log("Fetching games...");
       setIsLoading(true);
+      cursorRef.current = null;
       try {
-        const response = await loadGames();
+        const response = await loadGamesPage(null);
 
         if ("error" in response) {
           console.error("Failed loading games:", response.error);
           setGameStates([]);
         } else {
-          console.log("Loaded games: ", response);
-          const inferredGameStates = response.data.map((board) =>
-            inferGameStateByBoard(board),
+          cursorRef.current = response.data.cursor;
+          setHasMore(response.data.cursor !== null);
+          const inferredGameStates = response.data.games.map(
+            inferGameStateByBoard,
           );
           setGameStates(inferredGameStates);
         }
@@ -147,13 +171,19 @@ function App() {
       <header>
         <h1>OM2048</h1>
         <a href="https://github.com/Luca1905/OM2048">PLS star</a>
-          <button type="button" onClick={() => handleCreateGames(100)}>
-            CREATE 1 BOARD
-          </button>
-        <div style={{ gap: 16 ,display: "flex", flexDirection: "row" }}>
-          <p>Won Games: {gameStates.filter((game) => game.status === "won").length}</p>
+        <button type="button" onClick={() => handleCreateGames(100)}>
+          CREATE 1 BOARD
+        </button>
+        <div style={{ gap: 16, display: "flex", flexDirection: "row" }}>
+          <p>
+            Won Games:{" "}
+            {gameStates.filter((game) => game.status === "won").length}
+          </p>
           <p>Total Games: {gameStates.length}</p>
-          <p>Ongoing Games: {gameStates.filter((game) => game.status === "ongoing").length}</p>
+          <p>
+            Ongoing Games:{" "}
+            {gameStates.filter((game) => game.status === "ongoing").length}
+          </p>
         </div>
       </header>
       <main>
@@ -172,6 +202,11 @@ function App() {
               handleGameStateChange={handleLocalStateChange}
             />
           ))
+        )}
+        {hasMore && !isLoading && (
+          <button type="button" onClick={loadMore} disabled={isLoadingMore}>
+            {isLoadingMore ? "Loading..." : "Load More"}
+          </button>
         )}
       </main>
     </div>

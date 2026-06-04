@@ -7,12 +7,14 @@ import SuperJSON from "superjson";
 import {
   type ClientEvents,
   type GameID,
+  type PaginatedGamesResponse,
   type ServerEvents,
   type SocketData,
   type StoredState,
   gameIDSchema,
   storedStateSchema,
 } from "../shared/events";
+import { decodeBoard, encodeBoard, isHuffmanEncoded } from "../shared/huffman";
 
 import { isNil, zip } from "lodash";
 import { v4 as uuid } from "uuid";
@@ -22,6 +24,18 @@ import { redis } from "./redis";
 // --- Constants ---
 const REDIS_GAME_PREFIX = "game:";
 const WS_UPDATE_CHANNEL = "game:updated";
+const PAGE_SIZE = 50;
+
+function parseStoredGame(raw: string): StoredState {
+  if (isHuffmanEncoded(raw)) {
+    return decodeBoard(raw);
+  }
+  return storedStateSchema.parse(SuperJSON.parse(raw));
+}
+
+function serializeGame(board: StoredState): string {
+  return encodeBoard(board);
+}
 
 // --- Redis Helper Functions ---
 async function getGame(
@@ -49,8 +63,7 @@ async function getGame(
       callback(null, null);
       return;
     }
-    const parsedBoard = storedStateSchema.parse(SuperJSON.parse(res));
-    console.log("Read board: ", parsedBoard);
+    const parsedBoard = parseStoredGame(res);
     callback(null, { id: validId, board: parsedBoard });
   } catch (error) {
     console.error(`Error in getGame for ID ${id}:`, error);
@@ -96,7 +109,7 @@ async function setGame(
 
     await redis.SET(
       `${REDIS_GAME_PREFIX}${validId}`,
-      SuperJSON.stringify(validState),
+      serializeGame(validState),
     );
 
     callback(null, validId);
@@ -114,7 +127,7 @@ async function createGames(
     const validState = storedStateSchema.parse(data);
     const id = uuid();
     const key = `${REDIS_GAME_PREFIX}${id}`;
-    redis.SET(key, SuperJSON.stringify(validState));
+    redis.SET(key, serializeGame(validState));
     return id;
   });
 
@@ -128,51 +141,49 @@ async function createGames(
 }
 
 async function listGames(
-  callback: (error: string | null, gameDataList: SocketData[] | null) => void,
+  cursor: string | null,
+  callback: (
+    error: string | null,
+    result: PaginatedGamesResponse | null,
+  ) => void,
 ) {
   try {
-    const gameList: SocketData[] = [];
-    for await (const keys of redis.scanIterator({
+    const scanCursor = cursor ?? "0";
+    const scanResult = await redis.scan(scanCursor, {
       TYPE: "string",
       MATCH: "game:*",
-      COUNT: 100,
-    })) {
-      if (keys.length < 1) {
-        console.log("No games");
-        continue;
-      }
-      const results = await redis.MGET(keys);
-      for (const [fullKey, json] of zip(keys, results)) {
-        if (!isNil(json) && fullKey !== undefined) {
-          try {
-            const gameIdString = fullKey.replace(REDIS_GAME_PREFIX, "");
-            const idValidation = gameIDSchema.safeParse(gameIdString);
-            if (!idValidation.success) {
-              console.warn(
-                `Skipping game with invalid ID format from key ${fullKey}`,
-              );
-              continue;
-            }
-            const validGameId = idValidation.data;
-            const board = storedStateSchema.parse(SuperJSON.parse(json));
-            gameList.push({ id: validGameId, board });
-          } catch (parseError) {
-            let errorContext = String(parseError);
-            if (parseError instanceof z.ZodError && z.prettifyError) {
-              errorContext = z.prettifyError(parseError);
-            } else if (parseError instanceof Error) {
-              errorContext = parseError.message;
-            }
-            console.error(
-              "Failed to parse game state from Redis MGET result for key:",
-              fullKey,
-              errorContext,
-            );
-          }
-        }
+      COUNT: PAGE_SIZE,
+    });
+
+    const keys = scanResult.keys;
+    const nextCursor = scanResult.cursor === "0" ? null : scanResult.cursor;
+
+    if (keys.length === 0) {
+      callback(null, { games: [], cursor: nextCursor, total: 0 });
+      return;
+    }
+
+    const results = await redis.MGET(keys);
+    const games: SocketData[] = [];
+
+    for (const [fullKey, raw] of zip(keys, results)) {
+      if (isNil(raw) || fullKey === undefined) continue;
+      try {
+        const gameIdString = fullKey.replace(REDIS_GAME_PREFIX, "");
+        const idValidation = gameIDSchema.safeParse(gameIdString);
+        if (!idValidation.success) continue;
+        const board = parseStoredGame(raw);
+        games.push({ id: idValidation.data, board });
+      } catch (parseError) {
+        console.error(
+          "Failed to parse game from key:",
+          fullKey,
+          parseError instanceof Error ? parseError.message : parseError,
+        );
       }
     }
-    callback(null, gameList);
+
+    callback(null, { games, cursor: nextCursor, total: games.length });
   } catch (error) {
     console.error("Error in listGames:", error);
     callback("Failed to list games.", null);
@@ -222,7 +233,7 @@ export function createApplication(
       });
     });
 
-    socket.on("games:list", (callback) => listGames(callback));
+    socket.on("games:list", (cursor, callback) => listGames(cursor, callback));
     socket.on("games:create", (payload, callback) => {
       createGames(payload, (error, ids) => {
         if (error !== null) {
@@ -247,7 +258,10 @@ const allowedOrigins = process.env.VITE_FRONTEND_URL
   : ["http://localhost:5173"];
 
 console.log("Allowed origins:", allowedOrigins);
-console.log("UPSTASH_REDIS_URL set:", process.env.UPSTASH_REDIS_URL !== undefined);
+console.log(
+  "UPSTASH_REDIS_URL set:",
+  process.env.UPSTASH_REDIS_URL !== undefined,
+);
 
 createApplication(httpServer, {
   cors: {

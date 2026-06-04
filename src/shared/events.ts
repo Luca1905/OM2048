@@ -25,9 +25,19 @@ export interface ServerEvents {
   ) => void;
 }
 
+export interface PaginatedGamesResponse {
+  games: SocketData[];
+  cursor: string | null;
+  total: number;
+}
+
 export interface ClientEvents {
   "games:list": (
-    callback: (error: string | null, states: SocketData[] | null) => void,
+    cursor: string | null,
+    callback: (
+      error: string | null,
+      result: PaginatedGamesResponse | null,
+    ) => void,
   ) => void;
   "games:create": (
     payload: StoredState[],
