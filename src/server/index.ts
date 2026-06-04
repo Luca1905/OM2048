@@ -2,7 +2,6 @@ import { type Server as HttpServer, createServer } from "node:http";
 
 import type { ServerOptions } from "socket.io";
 import { Server } from "socket.io";
-import SuperJSON from "superjson";
 
 import {
   type ClientEvents,
@@ -14,7 +13,7 @@ import {
   gameIDSchema,
   storedStateSchema,
 } from "../shared/events";
-import { decodeBoard, encodeBoard, isHuffmanEncoded } from "../shared/huffman";
+import { decodeBoard, encodeBoard } from "../shared/huffman";
 
 import { isNil, zip } from "lodash";
 import { v4 as uuid } from "uuid";
@@ -25,17 +24,6 @@ import { redis } from "./redis";
 const REDIS_GAME_PREFIX = "game:";
 const WS_UPDATE_CHANNEL = "game:updated";
 const PAGE_SIZE = 50;
-
-function parseStoredGame(raw: string): StoredState {
-  if (isHuffmanEncoded(raw)) {
-    return decodeBoard(raw);
-  }
-  return storedStateSchema.parse(SuperJSON.parse(raw));
-}
-
-function serializeGame(board: StoredState): string {
-  return encodeBoard(board);
-}
 
 // --- Redis Helper Functions ---
 async function getGame(
@@ -63,7 +51,7 @@ async function getGame(
       callback(null, null);
       return;
     }
-    const parsedBoard = parseStoredGame(res);
+    const parsedBoard = decodeBoard(res);
     callback(null, { id: validId, board: parsedBoard });
   } catch (error) {
     console.error(`Error in getGame for ID ${id}:`, error);
@@ -107,10 +95,7 @@ async function setGame(
     }
     const validState = stateValidation.data;
 
-    await redis.SET(
-      `${REDIS_GAME_PREFIX}${validId}`,
-      serializeGame(validState),
-    );
+    await redis.SET(`${REDIS_GAME_PREFIX}${validId}`, encodeBoard(validState));
 
     callback(null, validId);
   } catch (error) {
@@ -127,7 +112,7 @@ async function createGames(
     const validState = storedStateSchema.parse(data);
     const id = uuid();
     const key = `${REDIS_GAME_PREFIX}${id}`;
-    redis.SET(key, serializeGame(validState));
+    redis.SET(key, encodeBoard(validState));
     return id;
   });
 
@@ -172,7 +157,7 @@ async function listGames(
         const gameIdString = fullKey.replace(REDIS_GAME_PREFIX, "");
         const idValidation = gameIDSchema.safeParse(gameIdString);
         if (!idValidation.success) continue;
-        const board = parseStoredGame(raw);
+        const board = decodeBoard(raw);
         games.push({ id: idValidation.data, board });
       } catch (parseError) {
         console.error(

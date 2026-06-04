@@ -9,7 +9,7 @@
     "start:frontend": "vite preview --host 0.0.0.0 --port 80",
     "build:frontend": "vite build",
     "start:backend": "bun run src/server",
-    "migrate:huffman": "bun run src/server/migrate-huffman.ts",
+    "seed": "bun run src/server/seed.ts",
     "typecheck": "tsc --noEmit",
     "check": "biome check .",
     "check:unsafe": "biome check --write --unsafe .",

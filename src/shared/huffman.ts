@@ -103,7 +103,3 @@ export function decodeBoard(encoded: string): StoredState {
 
   return board;
 }
-
-export function isHuffmanEncoded(data: string): boolean {
-  return data.startsWith(HUFFMAN_PREFIX);
-}
