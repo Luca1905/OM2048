@@ -1,7 +1,13 @@
 import { type Socket, io } from "socket.io-client";
 import type { ClientEvents, ServerEvents } from "src/shared/events";
 
-const URL = import.meta.env.VITE_BACKEND_URL;
+const URL =
+  import.meta.env.VITE_BACKEND_URL ?? `${window.location.protocol}//${window.location.host}`;
 
-console.log(URL);
-export const socket: Socket<ServerEvents, ClientEvents> = io(URL);
+console.log("Connecting socket.io client to:", URL);
+
+export const socket: Socket<ServerEvents, ClientEvents> = io(URL, {
+  transports: ["websocket"],
+  autoConnect: false,
+  withCredentials: false,
+});

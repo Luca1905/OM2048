@@ -98,6 +98,8 @@ async function setGame(
       `${REDIS_GAME_PREFIX}${validId}`,
       SuperJSON.stringify(validState),
     );
+
+    callback(null, validId);
   } catch (error) {
     console.error(`Error in updateGame for ID ${payload.id}:`, error);
     callback("Failed to update game state.", null);
@@ -196,16 +198,27 @@ export function createApplication(
         callback("Invalid payload: 'id' and 'board' are required.", null);
         return;
       }
-      setGame(payload, callback);
-      socket.broadcast.emit(WS_UPDATE_CHANNEL, payload, (error) => {
-        if (error !== null) {
-          console.error(
-            `Failed updating game for ${payload.id} to ${WS_UPDATE_CHANNEL}`,
-          );
+
+      setGame(payload, (error, gameId) => {
+        if (error !== null || gameId === null) {
+          callback(error ?? "Failed to update game state.", null);
+          return;
         }
-        console.log(
-          `Published update for game ${payload.id} to ${WS_UPDATE_CHANNEL}`,
+
+        socket.broadcast.emit(
+          WS_UPDATE_CHANNEL,
+          {
+            id: gameId,
+            board: payload.board,
+          },
+          () => {
+            console.log(
+              `Published update for game ${gameId} to ${WS_UPDATE_CHANNEL}`,
+            );
+          },
         );
+
+        callback(null, gameId);
       });
     });
 
