@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/om2048
-EnvironmentFile=/opt/om2048/.env.production
+EnvironmentFile=/opt/om2048/.env
 ExecStart=/root/.bun/bin/bun run src/server/index.ts
 Restart=on-failure
 RestartSec=5
